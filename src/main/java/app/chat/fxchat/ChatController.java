@@ -9,4 +9,12 @@ public class ChatController {
     public void onJoinClick(ActionEvent actionEvent) {
 
     }
+
+    @FXML
+    public void onSend(ActionEvent actionEvent) {
+    }
+
+    @FXML
+    public void onChangeName(ActionEvent actionEvent) {
+    }
 }
