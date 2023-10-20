@@ -1,4 +1,4 @@
-package app.chat.fxchat.sandbox;
+package app.chat.fxchat;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;

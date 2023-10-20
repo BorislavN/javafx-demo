@@ -1,0 +1,15 @@
+.root {
+    -fx-background-color: #c9c7c7;
+}
+
+#errorMessage {
+    -fx-background-color: #eb4d42;
+    -fx-background-radius: 6;
+    -fx-font-weight: bold;
+}
+
+.button{
+    -fx-background-color: #515254;
+    -fx-text-fill: #f2f2f2;
+    -fx-cursor: hand;
+}
