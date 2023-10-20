@@ -44,7 +44,7 @@
     </VBox>
 
     <VBox fx:id="mainPage" alignment="TOP_CENTER" minHeight="500" minWidth="450" managed="false" visible="false">
-        <TextArea fx:id="textArea" disable="true" editable="false" style="-fx-background-color: #f2f2f0;"
+        <TextArea fx:id="textArea" disable="true" editable="false" style="-fx-background-color: #f2f2f0;-fx-font-size: 16"
                   wrapText="true" VBox.vgrow="ALWAYS">
             <VBox.margin>
                 <Insets/>

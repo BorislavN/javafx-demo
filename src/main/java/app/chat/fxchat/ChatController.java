@@ -2,14 +2,14 @@ package app.chat.fxchat;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
-//TODO: Find out how to resize window when components are changed form visible to invisible
-//TODO: Find out how to hook up to the close-event, so we can add "User left..." message
+//TODO: Implement actual socket messages
 public class ChatController {
     @FXML
     private VBox usernamePage;
@@ -24,9 +24,11 @@ public class ChatController {
     @FXML
     private TextField messageInput;
     private String username;
+    private Stage stage;
 
     public ChatController() {
         this.username = "";
+        this.stage = null;
     }
 
     @FXML
@@ -42,7 +44,7 @@ public class ChatController {
 
         if ("".equals(this.username)) {
             this.textArea.appendText(String.format("%s joined the chat!%n", username));
-        } else {
+        } else if (!username.equals(this.username)){
             this.textArea.appendText(String.format("%s changed their name to %s%n", this.username, username));
         }
 
@@ -54,6 +56,8 @@ public class ChatController {
 
         this.mainPage.setManaged(true);
         this.mainPage.setVisible(true);
+
+        this.resize();
     }
 
     @FXML
@@ -83,5 +87,29 @@ public class ChatController {
         this.errorMessage.setVisible(false);
         this.usernamePage.setManaged(true);
         this.usernamePage.setVisible(true);
+
+        this.resize();
+    }
+
+    public void onClose(WindowEvent event, Stage stage) {
+        event.consume();
+
+        System.out.println("Close handler!");
+
+        if (!"".equals(this.username)) {
+            this.textArea.appendText(String.format("%s left the chat...%n", this.username));
+        }
+
+        stage.close();
+    }
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
+
+    private void resize() {
+        if (this.stage != null) {
+            stage.sizeToScene();
+        }
     }
 }

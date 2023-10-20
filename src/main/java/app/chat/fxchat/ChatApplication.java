@@ -15,8 +15,13 @@ public class ChatApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("chat-view.fxml"));
+
         Scene scene = new Scene(fxmlLoader.load());
         URL cssUrl = getClass().getResource("style.css");
+
+        ChatController controller = fxmlLoader.getController();
+        stage.setOnCloseRequest((event -> controller.onClose(event,stage)));
+        controller.setStage(stage);
 
         if (cssUrl != null) {
             scene.getStylesheets().add(cssUrl.toExternalForm());
