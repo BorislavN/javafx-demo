@@ -2,12 +2,15 @@ package app.chat.fxchat;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+
+import java.io.IOException;
 
 //TODO: Implement actual socket messages
 public class ChatController {
@@ -18,17 +21,19 @@ public class ChatController {
     @FXML
     private TextField usernameInput;
     @FXML
+    private Button joinBtn;
+    @FXML
     private VBox mainPage;
     @FXML
     private TextArea textArea;
     @FXML
     private TextField messageInput;
     private String username;
-    private Stage stage;
+    private MulticastClient client;
 
     public ChatController() {
         this.username = "";
-        this.stage = null;
+        this.client = null;
     }
 
     @FXML
@@ -44,7 +49,7 @@ public class ChatController {
 
         if ("".equals(this.username)) {
             this.textArea.appendText(String.format("%s joined the chat!%n", username));
-        } else if (!username.equals(this.username)){
+        } else if (!username.equals(this.username)) {
             this.textArea.appendText(String.format("%s changed their name to %s%n", this.username, username));
         }
 
@@ -103,13 +108,30 @@ public class ChatController {
         stage.close();
     }
 
-    public void setStage(Stage stage) {
-        this.stage = stage;
+    public void configureClient() {
+        try {
+            this.client = new MulticastClient("lo");
+
+        } catch (IOException | IllegalArgumentException | IllegalStateException e) {
+            System.err.println("Client failed to initialize - " + e.getMessage());
+
+            this.joinBtn.setDisable(true);
+            this.errorMessage.setText("Client failed to initialize!");
+            this.errorMessage.setVisible(true);
+        }
     }
 
+    //TODO: currently doesn't work, probably I should pass the TextArea as argument to the client
+    //so the messages are appended in the new thread
+    //This approach should avoid freezing the app
+    public void listen() {
+        this.client.listenForMessages();
+    }
+
+
+    //There may be better ways to get the stage
+    //This code should avoid NullPointerException, because it is only called in button-click handlers
     private void resize() {
-        if (this.stage != null) {
-            stage.sizeToScene();
-        }
+        this.usernamePage.getScene().getWindow().sizeToScene();
     }
 }

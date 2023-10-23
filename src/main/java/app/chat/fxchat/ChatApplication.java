@@ -20,8 +20,7 @@ public class ChatApplication extends Application {
         URL cssUrl = getClass().getResource("style.css");
 
         ChatController controller = fxmlLoader.getController();
-        stage.setOnCloseRequest((event -> controller.onClose(event,stage)));
-        controller.setStage(stage);
+        stage.setOnCloseRequest((event -> controller.onClose(event, stage)));
 
         if (cssUrl != null) {
             scene.getStylesheets().add(cssUrl.toExternalForm());
@@ -30,6 +29,9 @@ public class ChatApplication extends Application {
         stage.setTitle("Chat Client");
         stage.setScene(scene);
         stage.show();
+
+        controller.configureClient();
+        controller.listen();
     }
 
     public static void main(String[] args) {
