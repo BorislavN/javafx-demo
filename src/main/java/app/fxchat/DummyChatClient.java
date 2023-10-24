@@ -1,4 +1,4 @@
-package app.chat.fxchat;
+package app.fxchat;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;

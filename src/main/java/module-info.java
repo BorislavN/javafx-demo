@@ -1,8 +1,10 @@
-module app.chat.fxchat {
+module app.fxchat {
     requires javafx.controls;
     requires javafx.fxml;
 
-    opens app.chat.fxchat to javafx.fxml;
+    opens app.fxchat to javafx.fxml;
+    opens app.fxchat.multicast to javafx.fxml;
 
-    exports app.chat.fxchat;
+    exports app.fxchat;
+    exports app.fxchat.multicast;
 }

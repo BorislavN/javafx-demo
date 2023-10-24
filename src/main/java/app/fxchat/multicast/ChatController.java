@@ -1,4 +1,4 @@
-package app.chat.fxchat;
+package app.fxchat.multicast;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,7 +12,6 @@ import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
-//TODO: Implement actual socket messages
 public class ChatController {
     @FXML
     private VBox usernamePage;
@@ -42,15 +41,19 @@ public class ChatController {
 
         String username = this.usernameInput.getText();
 
-        if (username.isBlank() || username.length() > 20) {
+        if (username.isBlank() || username.length() > MulticastClient.USERNAME_LIMIT) {
             this.errorMessage.setVisible(true);
             return;
         }
 
         if ("".equals(this.username)) {
-            this.textArea.appendText(String.format("%s joined the chat!%n", username));
+            this.client.sendMessage(String.format("%s joined the chat!", username));
+
+            //Start listening for messages
+            this.client.listenForMessages(this.textArea);
+
         } else if (!username.equals(this.username)) {
-            this.textArea.appendText(String.format("%s changed their name to %s%n", this.username, username));
+            this.client.sendMessage(String.format("%s changed their name to %s", this.username, username));
         }
 
         this.username = username;
@@ -71,12 +74,12 @@ public class ChatController {
 
         String message = this.messageInput.getText();
 
-        if (message.isBlank() || message.length() > 50) {
+        if (message.isBlank() || message.length() > MulticastClient.MESSAGE_LIMIT) {
             this.messageInput.setStyle("-fx-border-color: red");
             return;
         }
 
-        this.textArea.appendText(String.format("%s: %s%n", this.username, message));
+        this.client.sendMessage(this.username, message);
 
         this.messageInput.setStyle("");
         this.messageInput.clear();
@@ -99,12 +102,11 @@ public class ChatController {
     public void onClose(WindowEvent event, Stage stage) {
         event.consume();
 
-        System.out.println("Close handler!");
-
         if (!"".equals(this.username)) {
-            this.textArea.appendText(String.format("%s left the chat...%n", this.username));
+            this.client.sendMessage(String.format("%s left the chat...", this.username));
         }
 
+        this.client.closeChannel();
         stage.close();
     }
 
@@ -120,14 +122,6 @@ public class ChatController {
             this.errorMessage.setVisible(true);
         }
     }
-
-    //TODO: currently doesn't work, probably I should pass the TextArea as argument to the client
-    //so the messages are appended in the new thread
-    //This approach should avoid freezing the app
-    public void listen() {
-        this.client.listenForMessages();
-    }
-
 
     //There may be better ways to get the stage
     //This code should avoid NullPointerException, because it is only called in button-click handlers

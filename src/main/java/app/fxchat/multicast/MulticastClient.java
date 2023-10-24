@@ -1,4 +1,6 @@
-package app.chat.fxchat;
+package app.fxchat.multicast;
+
+import javafx.scene.control.TextArea;
 
 import java.io.IOException;
 import java.net.*;
@@ -7,12 +9,9 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.MembershipKey;
 import java.nio.charset.StandardCharsets;
 
-//TODO: Use the class in the javafx implementation
-//I'm not sure if the "receiveMessage()" should be called in a new thread
-//To avoid blocking, while the method itself is non-blocking, it should be called in a while-loop....
 public class MulticastClient {
-    private static final int MESSAGE_LIMIT = 50;
-    private static final int USERNAME_LIMIT = 20;
+    public static final int MESSAGE_LIMIT = 50;
+    public static final int USERNAME_LIMIT = 20;
     private static final String GROUP_IP = "225.4.5.6";
     private static final int PORT = 6969;
     private final DatagramChannel channel;
@@ -48,7 +47,7 @@ public class MulticastClient {
         }
     }
 
-    public void listenForMessages() {
+    public void listenForMessages(TextArea textArea) {
         if (this.isLive()) {
             Thread worker = new Thread(() -> {
                 while (this.isLive()) {
@@ -58,12 +57,11 @@ public class MulticastClient {
                         SocketAddress address = this.channel.receive(buffer);
 
                         if (address != null) {
-                            //TODO: need reference to TextArea
-                            decodeMessage(buffer.flip());
+                            textArea.appendText(String.format("%s%n", decodeMessage(buffer.flip())));
                         }
 
                     } catch (IOException e) {
-                        //TODO: shiiiiiiiiiiiit :D, handle
+                        System.err.println("Client encountered error, while receiving messages - " + e.getMessage());
                     }
                 }
             });
@@ -72,11 +70,26 @@ public class MulticastClient {
         }
     }
 
-    public void sendMessage(String username, String message) throws IOException {
+    public void sendMessage(String username, String message) {
         if (this.isLive()) {
+            try {
+                if (this.validateMessage(message)) {
+                    this.channel.send(wrapMessage(username, message), new InetSocketAddress(GROUP_IP, PORT));
+                }
+            } catch (IOException e) {
+                System.err.println("Client failed to send message - " + e.getMessage());
+            }
+        }
+    }
 
-            if (this.validateMessage(message)) {
-                this.channel.send(wrapMessage(username, message), new InetSocketAddress(GROUP_IP, PORT));
+    public void sendMessage( String message) {
+        if (this.isLive()) {
+            try {
+                if (this.validateMessage(message)) {
+                    this.channel.send(wrapMessage( message), new InetSocketAddress(GROUP_IP, PORT));
+                }
+            } catch (IOException e) {
+                System.err.println("Client failed to send message - " + e.getMessage());
             }
         }
     }
@@ -103,5 +116,9 @@ public class MulticastClient {
 
     private ByteBuffer wrapMessage(String username, String message) {
         return ByteBuffer.wrap(String.format("%s: %s", username, message).getBytes(StandardCharsets.UTF_8));
+    }
+
+    private ByteBuffer wrapMessage( String message) {
+        return ByteBuffer.wrap( message.getBytes(StandardCharsets.UTF_8));
     }
 }
