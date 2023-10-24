@@ -73,7 +73,7 @@ public class MulticastClient {
     public void sendMessage(String username, String message) {
         if (this.isLive()) {
             try {
-                if (this.validateMessage(message)) {
+                if (message.length() <= (MESSAGE_LIMIT + USERNAME_LIMIT)) {
                     this.channel.send(wrapMessage(username, message), new InetSocketAddress(GROUP_IP, PORT));
                 }
             } catch (IOException e) {
@@ -82,11 +82,11 @@ public class MulticastClient {
         }
     }
 
-    public void sendMessage( String message) {
+    public void sendMessage(String message) {
         if (this.isLive()) {
             try {
-                if (this.validateMessage(message)) {
-                    this.channel.send(wrapMessage( message), new InetSocketAddress(GROUP_IP, PORT));
+                if (message.length() <= MESSAGE_LIMIT) {
+                    this.channel.send(wrapMessage(message), new InetSocketAddress(GROUP_IP, PORT));
                 }
             } catch (IOException e) {
                 System.err.println("Client failed to send message - " + e.getMessage());
@@ -102,14 +102,6 @@ public class MulticastClient {
         System.err.printf("%s - %s%n", message, err.getMessage());
     }
 
-    public boolean validateUsername(String name) {
-        return name.length() <= USERNAME_LIMIT;
-    }
-
-    public boolean validateMessage(String message) {
-        return message.length() <= MESSAGE_LIMIT;
-    }
-
     private String decodeMessage(ByteBuffer buffer) {
         return StandardCharsets.UTF_8.decode(buffer).toString();
     }
@@ -118,7 +110,7 @@ public class MulticastClient {
         return ByteBuffer.wrap(String.format("%s: %s", username, message).getBytes(StandardCharsets.UTF_8));
     }
 
-    private ByteBuffer wrapMessage( String message) {
-        return ByteBuffer.wrap( message.getBytes(StandardCharsets.UTF_8));
+    private ByteBuffer wrapMessage(String message) {
+        return ByteBuffer.wrap(message.getBytes(StandardCharsets.UTF_8));
     }
 }

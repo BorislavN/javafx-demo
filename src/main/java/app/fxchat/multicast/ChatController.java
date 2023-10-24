@@ -2,6 +2,7 @@ package app.fxchat.multicast;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -27,6 +28,8 @@ public class ChatController {
     private TextArea textArea;
     @FXML
     private TextField messageInput;
+    @FXML
+    private Button sendBtn;
     private String username;
     private MulticastClient client;
 
@@ -86,6 +89,22 @@ public class ChatController {
     }
 
     @FXML
+    public void onEnter(ActionEvent actionEvent) {
+        actionEvent.consume();
+
+        String targetId = ((Node) actionEvent.getTarget()).getId();
+
+        if ("usernameInput".equals(targetId)) {
+            this.joinBtn.fire();
+        }
+
+        if ("messageInput".equals(targetId)) {
+            this.sendBtn.fire();
+        }
+    }
+
+
+    @FXML
     public void onChangeName(ActionEvent actionEvent) {
         actionEvent.consume();
 
@@ -106,7 +125,9 @@ public class ChatController {
             this.client.sendMessage(String.format("%s left the chat...", this.username));
         }
 
-        this.client.closeChannel();
+        if (this.client != null) {
+            this.client.closeChannel();
+        }
         stage.close();
     }
 

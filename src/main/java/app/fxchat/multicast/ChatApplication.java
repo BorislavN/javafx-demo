@@ -8,9 +8,9 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
 
-//Currently just a mockup, no real TCP/UDO connection is made
-//Having a "module-info.java" lets us avoid manual JavaFx configuration
-//If we delete it, we need to set manually - "-module-path /path/to/javafx/lib --add-modules=javafx.controls,javafx.fxml"
+//Having a "module-info.java" lets us avoid manual JavaFx configuration, and we are able to start the project from the "Run" button
+//Alternatively we can start it from  maven console with "mvn clean javafx:run"
+//More information on "https://openjfx.io/openjfx-docs/"
 public class ChatApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
