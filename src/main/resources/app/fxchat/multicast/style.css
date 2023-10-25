@@ -2,10 +2,13 @@
     -fx-background-color: #c9c7c7;
 }
 
-#errorMessage {
-    -fx-background-color: #eb4d42;
+.label{
     -fx-background-radius: 6;
     -fx-font-weight: bold;
+}
+
+#errorMessage {
+    -fx-background-color: #eb4d42;
 }
 
 .button{

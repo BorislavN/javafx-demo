@@ -13,6 +13,8 @@ import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
+//TODO: the errors during send/receive operations can be displayed on the "announcement" field
+//TODO: can move the set/reset css operations to a dedicated method
 public class ChatController {
     @FXML
     private VBox usernamePage;
@@ -24,6 +26,8 @@ public class ChatController {
     private Button joinBtn;
     @FXML
     private VBox mainPage;
+    @FXML
+    private Label announcement;
     @FXML
     private TextArea textArea;
     @FXML
@@ -44,7 +48,14 @@ public class ChatController {
 
         String username = this.usernameInput.getText();
 
-        if (username.isBlank() || username.length() > MulticastClient.USERNAME_LIMIT) {
+        if (username.isBlank()) {
+            this.errorMessage.setText("Username cannot be blank!");
+            this.errorMessage.setVisible(true);
+            return;
+        }
+
+        if (username.length() > MulticastClient.USERNAME_LIMIT) {
+            this.errorMessage.setText(String.format("Username too long, limit %d B", MulticastClient.USERNAME_LIMIT));
             this.errorMessage.setVisible(true);
             return;
         }
@@ -65,6 +76,9 @@ public class ChatController {
         this.usernamePage.setManaged(false);
         this.usernamePage.setVisible(false);
 
+        this.announcement.setText(String.format("Welcome, %s!", this.username));
+        this.announcement.setStyle("-fx-background-color: #515254");
+
         this.mainPage.setManaged(true);
         this.mainPage.setVisible(true);
 
@@ -77,12 +91,24 @@ public class ChatController {
 
         String message = this.messageInput.getText();
 
-        if (message.isBlank() || message.length() > MulticastClient.MESSAGE_LIMIT) {
+        if (message.isBlank()) {
             this.messageInput.setStyle("-fx-border-color: red");
+            this.announcement.setText("Message cannot be blank!");
+            this.announcement.setStyle("-fx-background-color: #eb4d42");
+            return;
+        }
+
+        if (message.length() > MulticastClient.MESSAGE_LIMIT) {
+            this.messageInput.setStyle("-fx-border-color: red");
+            this.announcement.setText(String.format("Message too long, limit %d B", MulticastClient.MESSAGE_LIMIT));
+            this.announcement.setStyle("-fx-background-color: #eb4d42");
             return;
         }
 
         this.client.sendMessage(this.username, message);
+
+        this.announcement.setText(String.format("Welcome, %s!", this.username));
+        this.announcement.setStyle("-fx-background-color: #515254");
 
         this.messageInput.setStyle("");
         this.messageInput.clear();
