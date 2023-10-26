@@ -13,17 +13,27 @@ import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
-//TODO: spamming "Enter" freezes the UI, need to look at " javafx.concurrent", maybe make each "send" call a different task
+//TODO: the ip validation can be simplified
 //TODO: finish implementing ip/port change
+//TODO: spamming "Enter" freezes the UI, need to look at " javafx.concurrent", maybe make each "send" call a different task
+//TODO: cleanup the code
+//Alternately can implement some "chat-spamming" check like in games
+//To prevent sending messages faster than given threshold
 public class ChatController {
     @FXML
     private VBox usernamePage;
     @FXML
     private Label errorMessage;
     @FXML
+    private Label promptLabel;
+    @FXML
     private TextField usernameInput;
     @FXML
     private Button joinBtn;
+    @FXML
+    private Button showSettings;
+    @FXML
+    private Button changeSettings;
     @FXML
     private VBox mainPage;
     @FXML
@@ -158,8 +168,32 @@ public class ChatController {
         stage.close();
     }
 
-    public void onSettingsClick(ActionEvent event) {
-        //TODO: implement logic to change group
+    public void onShowSettings(ActionEvent event) {
+        event.consume();
+
+        this.joinBtn.setDisable(true);
+
+        this.promptLabel.setText("Enter group IP:");
+        this.usernameInput.setText(this.client.getGroup());
+        this.showSettings.setManaged(false);
+        this.showSettings.setVisible(false);
+        this.changeSettings.setManaged(true);
+        this.changeSettings.setVisible(true);
+    }
+
+    public void onSaveSettings(ActionEvent event) {
+        event.consume();
+
+        this.client.changeGroup(this.usernameInput.getText(), this.errorMessage, this.textArea);
+
+        this.promptLabel.setText("Enter an username:");
+        this.usernameInput.setText(this.username);
+        this.showSettings.setManaged(true);
+        this.showSettings.setVisible(true);
+        this.changeSettings.setManaged(false);
+        this.changeSettings.setVisible(false);
+
+        this.joinBtn.setDisable(false);
     }
 
     public void configureClient() {

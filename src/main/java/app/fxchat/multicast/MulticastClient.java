@@ -51,6 +51,10 @@ public class MulticastClient {
         }
     }
 
+    public String getGroup(){
+        return GROUP_IP;
+    }
+
     public void changeGroup(String address, Label errorField, TextArea area) {
         if (GROUP_IP.equals(address)) {
             return;
@@ -66,6 +70,8 @@ public class MulticastClient {
                     this.membership = this.channel.join(newAddress, this.netI);
                     GROUP_IP = address;
                     area.clear();
+
+                    return;
                 }
 
             } catch (UnknownHostException e) {
