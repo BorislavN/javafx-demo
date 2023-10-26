@@ -1,5 +1,6 @@
 package app.fxchat.multicast;
 
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 
 import java.io.IOException;
@@ -8,28 +9,31 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.MembershipKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.regex.Pattern;
 
 public class MulticastClient {
     public static final int MESSAGE_LIMIT = 50;
     public static final int USERNAME_LIMIT = 20;
-    private static final String GROUP_IP = "225.4.5.6";
+    private static String GROUP_IP = "225.4.5.6";
     private static final int PORT = 6969;
     private final DatagramChannel channel;
-    private final MembershipKey membership;
+    private final NetworkInterface netI;
+    private MembershipKey membership;
 
     public MulticastClient(String interfaceName) throws IOException, IllegalArgumentException, IllegalStateException {
-        NetworkInterface netI = NetworkInterface.getByName(interfaceName);
+        this.netI = NetworkInterface.getByName(interfaceName);
 
         this.channel = DatagramChannel.open(StandardProtocolFamily.INET)
                 .setOption(StandardSocketOptions.SO_REUSEADDR, true)
                 .bind(new InetSocketAddress(PORT))
-                .setOption(StandardSocketOptions.IP_MULTICAST_IF, netI);
+                .setOption(StandardSocketOptions.IP_MULTICAST_IF, this.netI);
 
         this.channel.configureBlocking(false);
 
         InetAddress group = InetAddress.getByName(GROUP_IP);
 
-        this.membership = this.channel.join(group, netI);
+        this.membership = this.channel.join(group, this.netI);
     }
 
     public void closeChannel() {
@@ -45,6 +49,40 @@ public class MulticastClient {
         } catch (IOException e) {
             this.logError("Exception occurred while closing the client", e);
         }
+    }
+
+    public void changeGroup(String address, Label errorField, TextArea area) {
+        if (GROUP_IP.equals(address)) {
+            return;
+        }
+
+        if (this.validateIpAddress(address)) {
+            try {
+                InetAddress newAddress = InetAddress.getByName(address);
+
+                if (newAddress.isMulticastAddress()) {
+                    this.membership.drop();
+
+                    this.membership = this.channel.join(newAddress, this.netI);
+                    GROUP_IP = address;
+                    area.clear();
+                }
+
+            } catch (UnknownHostException e) {
+                errorField.setText("Unknown host!");
+                errorField.setVisible(true);
+
+                return;
+            } catch (IOException e) {
+                errorField.setText("Failed to join group!");
+                errorField.setVisible(true);
+
+                return;
+            }
+        }
+
+        errorField.setText("Invalid Group IP!");
+        errorField.setVisible(true);
     }
 
     public void listenForMessages(TextArea textArea) {
@@ -64,6 +102,8 @@ public class MulticastClient {
                         System.err.println("Client encountered error, while receiving messages - " + e.getMessage());
                     }
                 }
+
+                System.out.println("Stopping \"Listening Thread\"...");
             });
 
             worker.start();
@@ -100,6 +140,42 @@ public class MulticastClient {
 
     public void logError(String message, Throwable err) {
         System.err.printf("%s - %s%n", message, err.getMessage());
+    }
+
+    public boolean validateIpAddress(String address) {
+        boolean matches = Pattern.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+$", address);
+
+        if (matches) {
+            //"The range of addresses between 224.0.0.0 and 224.0.0.255, inclusive,is reserved"
+            if (address.startsWith("224.0.0.")) {
+                return false;
+            }
+
+            return this.checkEachNumber(address);
+        }
+
+        return false;
+    }
+
+    private boolean checkEachNumber(String address) {
+        int[] data = Arrays.stream(address.split("\\.")).mapToInt(Integer::parseInt).toArray();
+
+        if (this.isNotInRange(224, 239, data[0])) {
+            return false;
+        }
+
+        for (int index = 1; index < data.length; index++) {
+
+            if (this.isNotInRange(0, 255, data[index])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean isNotInRange(int start, int end, int number) {
+        return number < start || number > end;
     }
 
     private String decodeMessage(ByteBuffer buffer) {

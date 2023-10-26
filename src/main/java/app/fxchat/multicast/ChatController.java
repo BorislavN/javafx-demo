@@ -13,8 +13,8 @@ import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
-//TODO: the errors during send/receive operations can be displayed on the "announcement" field
-//TODO: can move the set/reset css operations to a dedicated method
+//TODO: spamming "Enter" freezes the UI, need to look at " javafx.concurrent", maybe make each "send" call a different task
+//TODO: finish implementing ip/port change
 public class ChatController {
     @FXML
     private VBox usernamePage;
@@ -154,12 +154,17 @@ public class ChatController {
         if (this.client != null) {
             this.client.closeChannel();
         }
+
         stage.close();
+    }
+
+    public void onSettingsClick(ActionEvent event) {
+        //TODO: implement logic to change group
     }
 
     public void configureClient() {
         try {
-            this.client = new MulticastClient("lo");
+            this.client = new MulticastClient("eth2");
 
         } catch (IOException | IllegalArgumentException | IllegalStateException e) {
             System.err.println("Client failed to initialize - " + e.getMessage());
