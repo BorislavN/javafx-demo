@@ -15,27 +15,18 @@ import java.io.IOException;
 
 //TODO: the ip validation can be simplified
 //TODO: finish implementing ip/port change
-//TODO: spamming "Enter" freezes the UI, need to look at " javafx.concurrent", maybe make each "send" call a different task
 //TODO: cleanup the code
 //Alternately can implement some "chat-spamming" check like in games
 //To prevent sending messages faster than given threshold
 public class ChatController {
     @FXML
-    private VBox usernamePage;
+    private VBox usernamePage, mainPage;
     @FXML
-    private Label errorMessage;
-    @FXML
-    private Label promptLabel;
+    private Label errorMessage, promptLabel;
     @FXML
     private TextField usernameInput;
     @FXML
-    private Button joinBtn;
-    @FXML
-    private Button showSettings;
-    @FXML
-    private Button changeSettings;
-    @FXML
-    private VBox mainPage;
+    private Button joinBtn, showSettings, changeSettings;
     @FXML
     private Label announcement;
     @FXML
@@ -73,8 +64,9 @@ public class ChatController {
         if ("".equals(this.username)) {
             this.client.sendMessage(String.format("%s joined the chat!", username));
 
+            //TODO: find an alternative
             //Start listening for messages
-            this.client.listenForMessages(this.textArea);
+//            this.client.listenForMessages(this.textArea);
 
         } else if (!username.equals(this.username)) {
             this.client.sendMessage(String.format("%s changed their name to %s", this.username, username));
@@ -115,7 +107,10 @@ public class ChatController {
             return;
         }
 
-        this.client.sendMessage(this.username, message);
+        //Commenting the actual UDP "send" request solves our freezing problem
+//        this.client.sendMessage(this.username, message);
+        this.textArea.appendText(String.format("%s: %s%n", this.username, message));
+
 
         this.announcement.setText(String.format("Welcome, %s!", this.username));
         this.announcement.setStyle("-fx-background-color: #515254");
@@ -138,7 +133,6 @@ public class ChatController {
             this.sendBtn.fire();
         }
     }
-
 
     @FXML
     public void onChangeName(ActionEvent actionEvent) {
@@ -174,7 +168,7 @@ public class ChatController {
         this.joinBtn.setDisable(true);
 
         this.promptLabel.setText("Enter group IP:");
-        this.usernameInput.setText(this.client.getGroup());
+        this.usernameInput.setText(this.client.getGroupIP());
         this.showSettings.setManaged(false);
         this.showSettings.setVisible(false);
         this.changeSettings.setManaged(true);
@@ -198,7 +192,7 @@ public class ChatController {
 
     public void configureClient() {
         try {
-            this.client = new MulticastClient("eth2");
+            this.client = new MulticastClient("lo");
 
         } catch (IOException | IllegalArgumentException | IllegalStateException e) {
             System.err.println("Client failed to initialize - " + e.getMessage());

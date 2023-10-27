@@ -9,29 +9,30 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.MembershipKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.regex.Pattern;
 
 public class MulticastClient {
     public static final int MESSAGE_LIMIT = 50;
     public static final int USERNAME_LIMIT = 20;
-    private static String GROUP_IP = "225.4.5.6";
-    private static final int PORT = 6969;
     private final DatagramChannel channel;
     private final NetworkInterface netI;
     private MembershipKey membership;
+    private String groupIP;
+    private int port;
 
     public MulticastClient(String interfaceName) throws IOException, IllegalArgumentException, IllegalStateException {
         this.netI = NetworkInterface.getByName(interfaceName);
+        this.groupIP = "225.4.5.6";
+        this.port = 6969;
 
         this.channel = DatagramChannel.open(StandardProtocolFamily.INET)
                 .setOption(StandardSocketOptions.SO_REUSEADDR, true)
-                .bind(new InetSocketAddress(PORT))
+                .bind(new InetSocketAddress(this.port))
                 .setOption(StandardSocketOptions.IP_MULTICAST_IF, this.netI);
 
         this.channel.configureBlocking(false);
 
-        InetAddress group = InetAddress.getByName(GROUP_IP);
+        InetAddress group = InetAddress.getByName(this.groupIP);
 
         this.membership = this.channel.join(group, this.netI);
     }
@@ -51,12 +52,8 @@ public class MulticastClient {
         }
     }
 
-    public String getGroup(){
-        return GROUP_IP;
-    }
-
     public void changeGroup(String address, Label errorField, TextArea area) {
-        if (GROUP_IP.equals(address)) {
+        if (this.groupIP.equals(address)) {
             return;
         }
 
@@ -64,21 +61,14 @@ public class MulticastClient {
             try {
                 InetAddress newAddress = InetAddress.getByName(address);
 
-                if (newAddress.isMulticastAddress()) {
-                    this.membership.drop();
+                this.membership.drop();
 
-                    this.membership = this.channel.join(newAddress, this.netI);
-                    GROUP_IP = address;
-                    area.clear();
-
-                    return;
-                }
-
-            } catch (UnknownHostException e) {
-                errorField.setText("Unknown host!");
-                errorField.setVisible(true);
+                this.membership = this.channel.join(newAddress, this.netI);
+                this.groupIP = address;
+                area.clear();
 
                 return;
+
             } catch (IOException e) {
                 errorField.setText("Failed to join group!");
                 errorField.setVisible(true);
@@ -91,36 +81,28 @@ public class MulticastClient {
         errorField.setVisible(true);
     }
 
-    public void listenForMessages(TextArea textArea) {
-        if (this.isLive()) {
-            Thread worker = new Thread(() -> {
-                while (this.isLive()) {
-                    try {
-                        ByteBuffer buffer = ByteBuffer.allocate(USERNAME_LIMIT + MESSAGE_LIMIT);
+    public String receiveMessage() {
+        try {
+            if (this.isLive()) {
+                ByteBuffer buffer = ByteBuffer.allocate(USERNAME_LIMIT + MESSAGE_LIMIT);
+                SocketAddress address = this.channel.receive(buffer);
 
-                        SocketAddress address = this.channel.receive(buffer);
-
-                        if (address != null) {
-                            textArea.appendText(String.format("%s%n", decodeMessage(buffer.flip())));
-                        }
-
-                    } catch (IOException e) {
-                        System.err.println("Client encountered error, while receiving messages - " + e.getMessage());
-                    }
+                if (address != null) {
+                    return String.format("%s%n", decodeMessage(buffer.flip()));
                 }
-
-                System.out.println("Stopping \"Listening Thread\"...");
-            });
-
-            worker.start();
+            }
+        } catch (IOException e) {
+            System.err.println("Client encountered error, while receiving messages - " + e.getMessage());
         }
+
+        return null;
     }
 
     public void sendMessage(String username, String message) {
         if (this.isLive()) {
             try {
                 if (message.length() <= (MESSAGE_LIMIT + USERNAME_LIMIT)) {
-                    this.channel.send(wrapMessage(username, message), new InetSocketAddress(GROUP_IP, PORT));
+                    this.channel.send(wrapMessage(username, message), new InetSocketAddress(this.groupIP, this.port));
                 }
             } catch (IOException e) {
                 System.err.println("Client failed to send message - " + e.getMessage());
@@ -132,12 +114,28 @@ public class MulticastClient {
         if (this.isLive()) {
             try {
                 if (message.length() <= MESSAGE_LIMIT) {
-                    this.channel.send(wrapMessage(message), new InetSocketAddress(GROUP_IP, PORT));
+                    this.channel.send(wrapMessage(message), new InetSocketAddress(this.groupIP, this.port));
                 }
             } catch (IOException e) {
                 System.err.println("Client failed to send message - " + e.getMessage());
             }
         }
+    }
+
+    public String getGroupIP() {
+        return this.groupIP;
+    }
+
+    public void setGroupIP(String groupIP) {
+        this.groupIP = groupIP;
+    }
+
+    public int getPort() {
+        return this.port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 
     public boolean isLive() {
@@ -157,31 +155,18 @@ public class MulticastClient {
                 return false;
             }
 
-            return this.checkEachNumber(address);
+            return this.isMulticast(address);
         }
 
         return false;
     }
 
-    private boolean checkEachNumber(String address) {
-        int[] data = Arrays.stream(address.split("\\.")).mapToInt(Integer::parseInt).toArray();
-
-        if (this.isNotInRange(224, 239, data[0])) {
+    private boolean isMulticast(String address) {
+        try {
+            return InetAddress.getByName(address).isMulticastAddress();
+        } catch (UnknownHostException e) {
             return false;
         }
-
-        for (int index = 1; index < data.length; index++) {
-
-            if (this.isNotInRange(0, 255, data[index])) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private boolean isNotInRange(int start, int end, int number) {
-        return number < start || number > end;
     }
 
     private String decodeMessage(ByteBuffer buffer) {
