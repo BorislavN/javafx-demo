@@ -1,8 +1,5 @@
 package app.fxchat.multicast;
 
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-
 import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -52,33 +49,30 @@ public class MulticastClient {
         }
     }
 
-    public void changeGroup(String address, Label errorField, TextArea area) {
+    //The method returns "true" if the change was successful
+    public boolean changeGroup(String address) throws IllegalArgumentException {
+        if (!this.validateIpAddress(address)) {
+            throw new IllegalArgumentException("Invalid group IP!");
+        }
+
         if (this.groupIP.equals(address)) {
-            return;
+            throw new IllegalArgumentException("Target IP matches current IP!");
         }
 
-        if (this.validateIpAddress(address)) {
-            try {
-                InetAddress newAddress = InetAddress.getByName(address);
+        try {
+            InetAddress newAddress = InetAddress.getByName(address);
+            this.membership.drop();
 
-                this.membership.drop();
+            this.membership = this.channel.join(newAddress, this.netI);
+            this.groupIP = address;
 
-                this.membership = this.channel.join(newAddress, this.netI);
-                this.groupIP = address;
-                area.clear();
+            return true;
 
-                return;
+        } catch (IOException e) {
+            System.err.println("Failed to change the group - " + e.getMessage());
 
-            } catch (IOException e) {
-                errorField.setText("Failed to join group!");
-                errorField.setVisible(true);
-
-                return;
-            }
+            return false;
         }
-
-        errorField.setText("Invalid Group IP!");
-        errorField.setVisible(true);
     }
 
     public String receiveMessage() {
@@ -126,16 +120,14 @@ public class MulticastClient {
         return this.groupIP;
     }
 
-    public void setGroupIP(String groupIP) {
-        this.groupIP = groupIP;
-    }
-
     public int getPort() {
         return this.port;
     }
 
     public void setPort(int port) {
-        this.port = port;
+        if (this.validatePort(String.valueOf(port))) {
+            this.port = port;
+        }
     }
 
     public boolean isLive() {
@@ -144,6 +136,20 @@ public class MulticastClient {
 
     public void logError(String message, Throwable err) {
         System.err.printf("%s - %s%n", message, err.getMessage());
+    }
+
+    public boolean validatePort(String portValue) {
+        try {
+            int port = Integer.parseInt(portValue);
+
+            if (port >= 1024 && port <= 65353) {
+                return true;
+            }
+        } catch (NumberFormatException e) {
+            //Ignored - will return false
+        }
+
+        return false;
     }
 
     public boolean validateIpAddress(String address) {

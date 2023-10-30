@@ -22,11 +22,11 @@ public class ChatController {
     @FXML
     private VBox usernamePage, mainPage;
     @FXML
-    private Label errorMessage, promptLabel;
+    private Label errorMessage;
     @FXML
     private TextField usernameInput;
     @FXML
-    private Button joinBtn, showSettings, changeSettings;
+    private Button joinBtn, showSettings;
     @FXML
     private Label announcement;
     @FXML
@@ -165,29 +165,12 @@ public class ChatController {
     public void onShowSettings(ActionEvent event) {
         event.consume();
 
-        this.joinBtn.setDisable(true);
+        boolean wasChanged = SettingsInitializer.showSettings(this.client);
 
-        this.promptLabel.setText("Enter group IP:");
-        this.usernameInput.setText(this.client.getGroupIP());
-        this.showSettings.setManaged(false);
-        this.showSettings.setVisible(false);
-        this.changeSettings.setManaged(true);
-        this.changeSettings.setVisible(true);
-    }
-
-    public void onSaveSettings(ActionEvent event) {
-        event.consume();
-
-        this.client.changeGroup(this.usernameInput.getText(), this.errorMessage, this.textArea);
-
-        this.promptLabel.setText("Enter an username:");
-        this.usernameInput.setText(this.username);
-        this.showSettings.setManaged(true);
-        this.showSettings.setVisible(true);
-        this.changeSettings.setManaged(false);
-        this.changeSettings.setVisible(false);
-
-        this.joinBtn.setDisable(false);
+        if (wasChanged) {
+            this.textArea.clear();
+            this.username = "";
+        }
     }
 
     public void configureClient() {
