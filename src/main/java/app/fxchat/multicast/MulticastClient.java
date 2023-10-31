@@ -69,49 +69,37 @@ public class MulticastClient {
             return true;
 
         } catch (IOException e) {
-            System.err.println("Failed to change the group - " + e.getMessage());
+            this.logError("Failed to change the group", e);
 
             return false;
         }
     }
 
     public String receiveMessage() {
-        try {
-            if (this.isLive()) {
+        if (this.isLive()) {
+            try {
                 ByteBuffer buffer = ByteBuffer.allocate(USERNAME_LIMIT + MESSAGE_LIMIT);
                 SocketAddress address = this.channel.receive(buffer);
 
                 if (address != null) {
                     return String.format("%s%n", decodeMessage(buffer.flip()));
                 }
+            } catch (IOException e) {
+                this.logError("Client encountered error, while receiving messages", e);
             }
-        } catch (IOException e) {
-            System.err.println("Client encountered error, while receiving messages - " + e.getMessage());
         }
 
         return null;
     }
 
-    public void sendMessage(String username, String message) {
-        if (this.isLive()) {
-            try {
-                if (message.length() <= (MESSAGE_LIMIT + USERNAME_LIMIT)) {
-                    this.channel.send(wrapMessage(username, message), new InetSocketAddress(this.groupIP, this.port));
-                }
-            } catch (IOException e) {
-                System.err.println("Client failed to send message - " + e.getMessage());
-            }
-        }
-    }
-
     public void sendMessage(String message) {
         if (this.isLive()) {
             try {
-                if (message.length() <= MESSAGE_LIMIT) {
+                if (message.length() <= (MESSAGE_LIMIT + USERNAME_LIMIT)) {
                     this.channel.send(wrapMessage(message), new InetSocketAddress(this.groupIP, this.port));
                 }
             } catch (IOException e) {
-                System.err.println("Client failed to send message - " + e.getMessage());
+                this.logError("Client failed to send message", e);
             }
         }
     }
@@ -177,10 +165,6 @@ public class MulticastClient {
 
     private String decodeMessage(ByteBuffer buffer) {
         return StandardCharsets.UTF_8.decode(buffer).toString();
-    }
-
-    private ByteBuffer wrapMessage(String username, String message) {
-        return ByteBuffer.wrap(String.format("%s: %s", username, message).getBytes(StandardCharsets.UTF_8));
     }
 
     private ByteBuffer wrapMessage(String message) {

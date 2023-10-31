@@ -11,16 +11,16 @@ public class ReceiverTask extends Task<String> {
 
     @Override
     protected String call() throws Exception {
-        String latestMessage="ReceiverTask starting...";
+        String latestMessage = "ReceiverTask starting...";
 
         while (this.client.isLive()) {
-            if (this.isCancelled()){
+            if (this.isCancelled()) {
                 break;
             }
 
-            latestMessage= this.client.receiveMessage();
+            latestMessage = this.client.receiveMessage();
 
-            if (latestMessage!=null){
+            if (latestMessage != null) {
                 //Update latestMessage value, we will listen for the event in the "UI" thread
                 //"Updates are coalesced to prevent saturation of the FX event queue" - there may be better ways to update the value
                 //There is a chance with heavy load that some messages are missed

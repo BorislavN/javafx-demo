@@ -18,6 +18,9 @@ public class SettingsInitializer {
             FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("settings-view.fxml"));
             Scene scene = new Scene(fxmlLoader.load());
 
+            SettingsController controller = fxmlLoader.getController();
+            controller.setInitialValues(popup, client);
+
             URL cssUrl = SettingsController.class.getResource("style.css");
 
             if (cssUrl != null) {
@@ -26,10 +29,6 @@ public class SettingsInitializer {
 
             popup.setTitle("Settings");
             popup.setScene(scene);
-
-            SettingsController controller = fxmlLoader.getController();
-            controller.setInitialValues(popup, client);
-
             popup.showAndWait();
 
             return controller.wasChanged();

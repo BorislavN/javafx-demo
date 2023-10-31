@@ -13,11 +13,9 @@ import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
-//TODO: the ip validation can be simplified
-//TODO: finish implementing ip/port change
+//TODO: rework the port change option, maybe send "user-left" message before disconnecting
+//TODO: fix finish implementing the receiver tasks
 //TODO: cleanup the code
-//Alternately can implement some "chat-spamming" check like in games
-//To prevent sending messages faster than given threshold
 public class ChatController {
     @FXML
     private VBox usernamePage, mainPage;
@@ -26,7 +24,7 @@ public class ChatController {
     @FXML
     private TextField usernameInput;
     @FXML
-    private Button joinBtn, showSettings;
+    private Button joinBtn;
     @FXML
     private Label announcement;
     @FXML
@@ -37,10 +35,12 @@ public class ChatController {
     private Button sendBtn;
     private String username;
     private MulticastClient client;
+    private SenderService senderService;
 
     public ChatController() {
         this.username = "";
         this.client = null;
+        this.senderService = null;
     }
 
     @FXML
@@ -62,14 +62,14 @@ public class ChatController {
         }
 
         if ("".equals(this.username)) {
-            this.client.sendMessage(String.format("%s joined the chat!", username));
+            this.senderService.sendMessage(String.format("%s joined the chat!", username));
 
             //TODO: find an alternative
             //Start listening for messages
 //            this.client.listenForMessages(this.textArea);
 
         } else if (!username.equals(this.username)) {
-            this.client.sendMessage(String.format("%s changed their name to %s", this.username, username));
+            this.senderService.sendMessage(String.format("%s changed their name to %s", this.username, username));
         }
 
         this.username = username;
@@ -107,10 +107,7 @@ public class ChatController {
             return;
         }
 
-        //Commenting the actual UDP "send" request solves our freezing problem
-//        this.client.sendMessage(this.username, message);
-        this.textArea.appendText(String.format("%s: %s%n", this.username, message));
-
+        this.senderService.sendMessage(this.username, message);
 
         this.announcement.setText(String.format("Welcome, %s!", this.username));
         this.announcement.setStyle("-fx-background-color: #515254");
@@ -152,6 +149,9 @@ public class ChatController {
         event.consume();
 
         if (!"".equals(this.username)) {
+            //We send it directly through the client, because the service
+            //uses demon threads and they are terminated when the stage closes
+            //Thus before the message is delivered
             this.client.sendMessage(String.format("%s left the chat...", this.username));
         }
 
@@ -176,6 +176,7 @@ public class ChatController {
     public void configureClient() {
         try {
             this.client = new MulticastClient("lo");
+            this.senderService = new SenderService(this.client);
 
         } catch (IOException | IllegalArgumentException | IllegalStateException e) {
             System.err.println("Client failed to initialize - " + e.getMessage());

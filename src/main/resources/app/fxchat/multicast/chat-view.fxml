@@ -43,7 +43,7 @@
                     <Font size="18.0"/>
                 </font>
             </Button>
-            <Button fx:id="showSettings" alignment="CENTER" mnemonicParsing="false" onAction="#onShowSettings"
+            <Button alignment="CENTER" mnemonicParsing="false" onAction="#onShowSettings"
                     style=" -fx-background-radius: 6;" text="Settings">
                 <padding>
                     <Insets bottom="15.0" left="20.0" right="20.0" top="15.0"/>
