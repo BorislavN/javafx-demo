@@ -11,8 +11,8 @@ import java.util.regex.Pattern;
 public class MulticastClient {
     public static final int MESSAGE_LIMIT = 50;
     public static final int USERNAME_LIMIT = 20;
-    private final DatagramChannel channel;
     private final NetworkInterface netI;
+    private DatagramChannel channel;
     private MembershipKey membership;
     private String groupIP;
     private int port;
@@ -22,6 +22,10 @@ public class MulticastClient {
         this.groupIP = "225.4.5.6";
         this.port = 6969;
 
+        this.initializeChannel();
+    }
+
+    private void initializeChannel() throws IOException, IllegalArgumentException, IllegalStateException {
         this.channel = DatagramChannel.open(StandardProtocolFamily.INET)
                 .setOption(StandardSocketOptions.SO_REUSEADDR, true)
                 .bind(new InetSocketAddress(this.port))
@@ -75,6 +79,30 @@ public class MulticastClient {
         }
     }
 
+    public boolean changePort(int port) throws IllegalArgumentException {
+        if (!this.validatePort(String.valueOf(port))) {
+            throw new IllegalArgumentException("Invalid port!");
+        }
+
+        if (this.port == port) {
+            throw new IllegalArgumentException("Target port matches current port!");
+        }
+
+        try {
+            this.closeChannel();
+
+            this.port = port;
+            this.initializeChannel();
+
+            return true;
+
+        } catch (IOException e) {
+            this.logError("Failed to change the port", e);
+
+            return false;
+        }
+    }
+
     public String receiveMessage() {
         if (this.isLive()) {
             try {
@@ -110,12 +138,6 @@ public class MulticastClient {
 
     public int getPort() {
         return this.port;
-    }
-
-    public void setPort(int port) {
-        if (this.validatePort(String.valueOf(port))) {
-            this.port = port;
-        }
     }
 
     public boolean isLive() {

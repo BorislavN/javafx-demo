@@ -13,7 +13,6 @@ import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
-//TODO: rework the port change option, maybe send "user-left" message before disconnecting
 //TODO: fix finish implementing the receiver tasks
 //TODO: cleanup the code
 public class ChatController {
@@ -164,6 +163,10 @@ public class ChatController {
 
     public void onShowSettings(ActionEvent event) {
         event.consume();
+
+        if (!"".equals(this.username)) {
+            this.senderService.sendMessage(String.format("%s disconnected...", this.username));
+        }
 
         boolean wasChanged = SettingsInitializer.showSettings(this.client);
 

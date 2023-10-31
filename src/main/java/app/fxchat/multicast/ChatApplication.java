@@ -27,12 +27,11 @@ public class ChatApplication extends Application {
 
         ChatController controller = fxmlLoader.getController();
         stage.setOnCloseRequest((event -> controller.onClose(event, stage)));
+        controller.configureClient();
 
         stage.setTitle("Chat Client");
         stage.setScene(scene);
         stage.show();
-
-        controller.configureClient();
     }
 
     public static void main(String[] args) {

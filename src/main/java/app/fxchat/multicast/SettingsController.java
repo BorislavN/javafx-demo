@@ -40,26 +40,26 @@ public class SettingsController {
         String newGroup = groupInput.getText();
         String newPort = portInput.getText();
 
-        if (this.client.validateIpAddress(newGroup)) {
-            if (!newGroup.equals(this.client.getGroupIP())) {
-                this.wasChanged = this.client.changeGroup(newGroup);
+        //This check is first, because if the port was changed, whe have to reinitialize the whole client
+        if (this.client.validatePort(newPort)) {
+            int port = Integer.parseInt(newPort);
+
+            if (port != this.client.getPort()) {
+                this.wasChanged = (this.wasChanged || this.client.changePort(port));
             }
         } else {
-            this.errorMessage.setText("Invalid group IP!");
+            this.errorMessage.setText("Invalid port number!");
             this.errorMessage.setVisible(true);
 
             return;
         }
 
-        if (this.client.validatePort(newPort)) {
-            int port = Integer.parseInt(newPort);
-
-            if (port != this.client.getPort()) {
-                this.client.setPort(port);
-                this.wasChanged = true;
+        if (this.client.validateIpAddress(newGroup)) {
+            if (!newGroup.equals(this.client.getGroupIP())) {
+                this.wasChanged = (this.wasChanged || this.client.changeGroup(newGroup));
             }
         } else {
-            this.errorMessage.setText("Invalid port number!");
+            this.errorMessage.setText("Invalid group IP!");
             this.errorMessage.setVisible(true);
 
             return;

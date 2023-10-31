@@ -26,10 +26,6 @@ public class SenderService extends Service<Void> {
 
     @Override
     protected Task<Void> createTask() {
-        if (this.currentMessage == null) {
-            throw new IllegalArgumentException("Message cannot be null!");
-        }
-
         return new SenderTask(this.client, this.currentMessage);
     }
 }
