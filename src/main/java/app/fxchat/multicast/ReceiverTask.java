@@ -4,6 +4,9 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+
 public class ReceiverTask extends Task<Void> {
     private final MulticastClient client;
     private final ObservableList<String> messageList;
@@ -18,20 +21,26 @@ public class ReceiverTask extends Task<Void> {
         String tempGroup = this.client.getGroupIP();
         int tempPort = this.client.getPort();
 
+        Selector selector = this.client.getSelector();
+
         this.logMessage(tempGroup, tempPort, "ReceiverTask starting...");
 
         while (this.client.isLive()) {
-            if (this.isCancelled()) {
+            //The "select" is blocking to save CPU resources, if the thread is interrupted, the selector unblocks
+            selector.select();
+
+            if (this.isCancelled() || !selector.isOpen()) {
                 break;
             }
 
-            String message = this.client.receiveMessage();
+            for (SelectionKey key : selector.selectedKeys()) {
+                if (key.isValid() && key.isReadable()) {
+                    String message = this.client.receiveMessage();
 
-            if (message != null) {
-                //This is the example from the "javafx.concurrent.Task" documentation
-                //If we don't use the "runLater" method, the ListChangeListener in ChatController
-                //ends-up executing outside the FX Thread
-                Platform.runLater(() -> this.messageList.add(message));
+                    if (message != null) {
+                        Platform.runLater(() -> this.messageList.add(message));
+                    }
+                }
             }
         }
 

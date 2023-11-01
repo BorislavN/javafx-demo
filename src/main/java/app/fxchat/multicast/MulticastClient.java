@@ -5,21 +5,18 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.MembershipKey;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
-//When the channel is in non-blocking mode it returns null if there is no data
-//creating more CPU load, because of the fast-spinning while, than in blocking mode
-//But we cannot cancel the application :D and a bunch of bugs occur
-//TODO: try to find a workaround to use the blocking mode and reduce cpu load
-//TODO: maybe I can use a Selector, to indicate when there is data to read,
-// the selector requires non-blocking mode - maybe we can dodge the bugs :D
 public class MulticastClient {
     public static final int MESSAGE_LIMIT = 50;
     public static final int USERNAME_LIMIT = 20;
     private final NetworkInterface netI;
     private DatagramChannel channel;
     private MembershipKey membership;
+    private Selector selector;
     private String groupIP;
     private int port;
 
@@ -37,8 +34,10 @@ public class MulticastClient {
                 .bind(new InetSocketAddress(this.port))
                 .setOption(StandardSocketOptions.IP_MULTICAST_IF, this.netI);
 
-
         this.channel.configureBlocking(false);
+
+        this.selector = Selector.open();
+        this.channel.register(this.selector, SelectionKey.OP_READ);
 
         InetAddress group = InetAddress.getByName(this.groupIP);
 
@@ -51,8 +50,11 @@ public class MulticastClient {
                 this.membership.drop();
             }
 
+            if (this.selector != null) {
+                this.selector.close();
+            }
+
             if (this.channel != null) {
-                this.channel.disconnect();
                 this.channel.close();
             }
         } catch (IOException e) {
@@ -71,9 +73,9 @@ public class MulticastClient {
         }
 
         try {
-            InetAddress newAddress = InetAddress.getByName(address);
             this.membership.drop();
 
+            InetAddress newAddress = InetAddress.getByName(address);
             this.membership = this.channel.join(newAddress, this.netI);
             this.groupIP = address;
 
@@ -137,6 +139,10 @@ public class MulticastClient {
                 this.logError("Client failed to send message", e);
             }
         }
+    }
+
+    public Selector getSelector() {
+        return this.selector;
     }
 
     public String getGroupIP() {

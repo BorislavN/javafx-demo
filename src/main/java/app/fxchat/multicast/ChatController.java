@@ -14,6 +14,7 @@ import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
+//TODO: rework the "send-message" method, can be done in queue, or with different executor
 //TODO: cleanup the code
 public class ChatController {
     @FXML
@@ -182,6 +183,12 @@ public class ChatController {
         if (wasChanged) {
             this.textArea.clear();
             this.username = "";
+
+            return;
+        }
+
+        if (!"".equals(this.username)) {
+            this.senderService.sendMessage(String.format("%s reconnected...", this.username));
         }
     }
 
