@@ -1,5 +1,6 @@
 package app.fxchat.multicast;
 
+import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -13,7 +14,6 @@ import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
-//TODO: fix finish implementing the receiver tasks
 //TODO: cleanup the code
 public class ChatController {
     @FXML
@@ -35,11 +35,13 @@ public class ChatController {
     private String username;
     private MulticastClient client;
     private SenderService senderService;
+    private ReceiverService receiverService;
 
     public ChatController() {
         this.username = "";
         this.client = null;
         this.senderService = null;
+        this.receiverService = null;
     }
 
     @FXML
@@ -61,11 +63,18 @@ public class ChatController {
         }
 
         if ("".equals(this.username)) {
-            this.senderService.sendMessage(String.format("%s joined the chat!", username));
+            if (this.receiverService == null) {
+                this.receiverService = new ReceiverService(this.client);
 
-            //TODO: find an alternative
-            //Start listening for messages
-//            this.client.listenForMessages(this.textArea);
+                this.receiverService.messageListProperty().getValue().addListener(this.getChangeHandler());
+            } else {
+                this.receiverService.cancel();
+                this.receiverService.reset();
+            }
+
+            this.receiverService.start();
+
+            this.senderService.sendMessage(String.format("%s joined the chat!", username));
 
         } else if (!username.equals(this.username)) {
             this.senderService.sendMessage(String.format("%s changed their name to %s", this.username, username));
@@ -188,6 +197,16 @@ public class ChatController {
             this.errorMessage.setText("Client failed to initialize!");
             this.errorMessage.setVisible(true);
         }
+    }
+
+    private ListChangeListener<String> getChangeHandler() {
+        return change -> {
+            while (change.next()) {
+                if (change.wasAdded()) {
+                    this.textArea.appendText(change.getList().get(change.getFrom()));
+                }
+            }
+        };
     }
 
     //There may be better ways to get the stage

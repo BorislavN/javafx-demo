@@ -17,7 +17,9 @@ public class SenderTask extends Task<Void> {
             throw new IllegalArgumentException("Message cannot be null!");
         }
 
-        this.client.sendMessage(this.message);
+        if (!this.isCancelled()) {
+            this.client.sendMessage(this.message);
+        }
 
         return null;
     }

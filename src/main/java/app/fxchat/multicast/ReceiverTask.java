@@ -1,33 +1,49 @@
 package app.fxchat.multicast;
 
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 
-public class ReceiverTask extends Task<String> {
+public class ReceiverTask extends Task<Void> {
     private final MulticastClient client;
+    private final ObservableList<String> messageList;
 
-    public ReceiverTask(MulticastClient client) {
+    public ReceiverTask(MulticastClient client, ObservableList<String> messageList) {
         this.client = client;
+        this.messageList = messageList;
     }
 
     @Override
-    protected String call() throws Exception {
-        String latestMessage = "ReceiverTask starting...";
+    protected Void call() throws Exception {
+        String tempGroup = this.client.getGroupIP();
+        int tempPort = this.client.getPort();
+
+        this.logMessage(tempGroup, tempPort, "ReceiverTask starting...");
 
         while (this.client.isLive()) {
             if (this.isCancelled()) {
                 break;
             }
 
-            latestMessage = this.client.receiveMessage();
+            String message = this.client.receiveMessage();
 
-            if (latestMessage != null) {
-                //Update latestMessage value, we will listen for the event in the "UI" thread
-                //"Updates are coalesced to prevent saturation of the FX event queue" - there may be better ways to update the value
-                //There is a chance with heavy load that some messages are missed
-                this.updateValue(latestMessage);
+            if (message != null) {
+                //This is the example from the "javafx.concurrent.Task" documentation
+                //If we don't use the "runLater" method, the ListChangeListener in ChatController
+                //ends-up executing outside the FX Thread
+                Platform.runLater(() -> this.messageList.add(message));
             }
         }
 
-        return latestMessage;
+        this.logMessage(tempGroup, tempPort, "ReceiverTask finishing...");
+
+        return null;
+    }
+
+    private void logMessage(String group, int port, String message) {
+        System.out.println("----------------------------------------------");
+        System.out.println(Thread.currentThread().getName() + ":");
+        System.out.printf("%s:%d - %s%n", group, port, message);
+        System.out.println("----------------------------------------------");
     }
 }

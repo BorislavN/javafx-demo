@@ -8,6 +8,12 @@ import java.nio.channels.MembershipKey;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
+//When the channel is in non-blocking mode it returns null if there is no data
+//creating more CPU load, because of the fast-spinning while, than in blocking mode
+//But we cannot cancel the application :D and a bunch of bugs occur
+//TODO: try to find a workaround to use the blocking mode and reduce cpu load
+//TODO: maybe I can use a Selector, to indicate when there is data to read,
+// the selector requires non-blocking mode - maybe we can dodge the bugs :D
 public class MulticastClient {
     public static final int MESSAGE_LIMIT = 50;
     public static final int USERNAME_LIMIT = 20;
@@ -30,6 +36,7 @@ public class MulticastClient {
                 .setOption(StandardSocketOptions.SO_REUSEADDR, true)
                 .bind(new InetSocketAddress(this.port))
                 .setOption(StandardSocketOptions.IP_MULTICAST_IF, this.netI);
+
 
         this.channel.configureBlocking(false);
 
