@@ -11,8 +11,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 public class MulticastClient {
-    public static final int MESSAGE_LIMIT = 50;
-    public static final int USERNAME_LIMIT = 20;
+    public static final int MESSAGE_LIMIT = 175;
+    public static final int USERNAME_LIMIT = 25;
     private final NetworkInterface netI;
     private DatagramChannel channel;
     private MembershipKey membership;
