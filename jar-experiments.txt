@@ -1,0 +1,33 @@
+@ECHO OFF
+cd "C:\Users\User\Desktop\FxChat"
+java --module-path "./out/artifacts/FxChat_jar" --add-modules javafx.controls,javafx.fxml -jar "./out/artifacts/FxChat_jar/FxChat.jar"
+
+//////////////////////////////////////////////////////
+
+The problem I was facing - after crating a jar with IntelliJs "Add Artifact" - I was getting an exception while trying to run it
+The javafx components where missing...
+
+Solution 1:
+Above is the example of a batch file that can be used to run the javafx chat jar
+The jar was crated with the IntelliJ "Add Artifact" Menu
+Selecting the ChatApplication class as the entry point of the application
+Choose "Add library jars to output directory and link in manifest" option
+This option adds the jars of our dependencies in the same folder
+This way I was able to add the "javafx.controls,javafx.fxml" to the module path when running the application
+
+Solution 2:
+Crate a Launcher class, which has a main method calling the ChatApplication main method
+Change the entry point of the program to the Launcher class in the pom
+Select the Launcher class as the entry point of the application
+Create a jar using IntelliJs "Add Artifact" Menu, don't use "Add library jars to output directory and link in manifest" option
+Run the jar, you will get a warning about inappropriate configuration, but the app will still run
+
+Solution 3:
+Use the javafx:jlink plugin as by the "https://openjfx.io/openjfx-docs/#modular" documentation
+After executing the command in the target folder you will find a launcher to execute the app
+The launcher name is set in the pom "<jlinkImageName>app</jlinkImageName>"
+
+Solution 4:
+After crating a jar as in "Solution 1", you can use "jpackage" to crate an exe
+Run "jpackage --type "app-image" --module-path "./out/artifacts/FxChat_jar" --module app.fxchat/app.fxchat.multicast.ChatApplication --dest ./chat"
+In the "chat" folder you will find an exe

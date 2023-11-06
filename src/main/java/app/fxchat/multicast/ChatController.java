@@ -14,7 +14,7 @@ import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
-//TODO: rework the "send-message" method, can be done in queue, or with different executor
+//TODO: Can't change port and ip at the same time, investigate...
 //TODO: cleanup the code
 public class ChatController {
     @FXML

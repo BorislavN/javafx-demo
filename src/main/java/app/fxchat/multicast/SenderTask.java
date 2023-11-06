@@ -18,6 +18,7 @@ public class SenderTask extends Task<Void> {
         }
 
         if (!this.isCancelled()) {
+//            System.out.println(Thread.currentThread().getName() + " - " + this.message);
             this.client.sendMessage(this.message);
         }
 

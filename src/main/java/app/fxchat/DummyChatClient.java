@@ -13,7 +13,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-//TODO: This is just a demo, I will try to implement a proper JavaFx Chat Client, using my TCP/UDP chat implementations
+//This is just a demo, I will try to implement a proper JavaFx Chat Client, using my TCP/UDP chat implementations
 public class DummyChatClient extends Application {
     private Stage window;
     private Scene joinScene;
@@ -26,7 +26,7 @@ public class DummyChatClient extends Application {
     }
 
     @Override
-    public void start(Stage stage) throws Exception {
+    public void start(Stage stage) {
         this.window = stage;
         this.window.setTitle("Chat Client");
 
