@@ -14,6 +14,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 //This is just a demo, I will try to implement a proper JavaFx Chat Client, using my TCP/UDP chat implementations
+//First "app" I created using JavaFx
 public class DummyChatClient extends Application {
     private Stage window;
     private Scene joinScene;

@@ -59,7 +59,7 @@ public class SettingsController {
                 this.wasChanged = (this.wasChanged || this.client.changeGroup(newGroup));
             }
         } else {
-            this.errorMessage.setText("Invalid group IP!");
+            this.errorMessage.setText("Invalid IP, must start with \"239\"!");
             this.errorMessage.setVisible(true);
 
             return;

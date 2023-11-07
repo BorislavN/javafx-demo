@@ -22,7 +22,7 @@ public class MulticastClient {
 
     public MulticastClient(String interfaceName) throws IOException, IllegalArgumentException, IllegalStateException {
         this.netI = NetworkInterface.getByName(interfaceName);
-        this.groupIP = "225.4.5.6";
+        this.groupIP = "239.4.5.6";
         this.port = 6969;
 
         this.initializeChannel();
@@ -179,8 +179,8 @@ public class MulticastClient {
         boolean matches = Pattern.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+$", address);
 
         if (matches) {
-            //"The range of addresses between 224.0.0.0 and 224.0.0.255, inclusive,is reserved"
-            if (address.startsWith("224.0.0.")) {
+            //239.0.0.0 to 239.255.255.255: These are meant for local use and are not to be routed outside the local network
+            if (!address.startsWith("239.")) {
                 return false;
             }
 

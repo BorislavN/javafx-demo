@@ -194,7 +194,7 @@ public class ChatController {
 
     public void configureClient() {
         try {
-            this.client = new MulticastClient("lo");
+            this.client = new MulticastClient("eth2");
             this.senderService = new SenderService(this.client);
 
         } catch (IOException | IllegalArgumentException | IllegalStateException e) {
