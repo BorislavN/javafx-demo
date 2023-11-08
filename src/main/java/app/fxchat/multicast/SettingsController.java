@@ -40,26 +40,29 @@ public class SettingsController {
         String newGroup = groupInput.getText();
         String newPort = portInput.getText();
 
-        //This check is first, because if the port was changed, whe have to reinitialize the whole client
-        if (this.client.validatePort(newPort)) {
-            int port = Integer.parseInt(newPort);
-
-            if (port != this.client.getPort()) {
-                this.wasChanged = (this.wasChanged || this.client.changePort(port));
+        //Careful on which side of "||" you put your function call, because the operator can "short circuit"
+        //In this case if "wasChanged" is in front and "true", the function will not be called
+        //"||" will return after the first "true"
+        //"&&" will return after the first "false"
+        if (this.client.validateIpAddress(newGroup)) {
+            if (!newGroup.equals(this.client.getGroupIP())) {
+                this.wasChanged = (this.client.changeGroup(newGroup) || this.wasChanged);
             }
         } else {
-            this.errorMessage.setText("Invalid port number!");
+            this.errorMessage.setText("Invalid IP, must start with \"239\"!");
             this.errorMessage.setVisible(true);
 
             return;
         }
 
-        if (this.client.validateIpAddress(newGroup)) {
-            if (!newGroup.equals(this.client.getGroupIP())) {
-                this.wasChanged = (this.wasChanged || this.client.changeGroup(newGroup));
+        if (this.client.validatePort(newPort)) {
+            int port = Integer.parseInt(newPort);
+
+            if (port != this.client.getPort()) {
+                this.wasChanged = (this.client.changePort(port) || this.wasChanged);
             }
         } else {
-            this.errorMessage.setText("Invalid IP, must start with \"239\"!");
+            this.errorMessage.setText("Invalid port number!");
             this.errorMessage.setVisible(true);
 
             return;

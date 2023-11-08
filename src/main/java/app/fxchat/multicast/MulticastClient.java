@@ -179,7 +179,11 @@ public class MulticastClient {
         boolean matches = Pattern.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+$", address);
 
         if (matches) {
-            //239.0.0.0 to 239.255.255.255: These are meant for local use and are not to be routed outside the local network
+            //"239.0.0.0 to 239.255.255.255: These are meant for local use and are not to be routed outside the local network"
+            //We can use the public multicast range too, since the default TTL is 1 - the packets won't leave the LAN
+            //Receiving messages depends on firewall settings, router settings, ISP configuration... ,
+            //so in most cases we won't be getting any "foreign" messages
+            //Tried out "224.0.19.19" with devices on different networks, no messages were received
             if (!address.startsWith("239.")) {
                 return false;
             }

@@ -14,8 +14,6 @@ import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
-//TODO: Can't change port and ip at the same time, investigate...
-//TODO: cleanup the code
 public class ChatController {
     @FXML
     private VBox usernamePage, mainPage;
