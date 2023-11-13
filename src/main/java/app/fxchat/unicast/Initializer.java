@@ -13,9 +13,17 @@ public class Initializer {
     //TODO: this class will provide static methods for constructing the popup windows for
     // "settings" and "direct messages" windows
 
-    public static SceneContext buildScene(Class<? extends Application> appClass, String fxmlName) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(appClass.getResource(fxmlName));
-        Scene scene = new Scene(fxmlLoader.load());
+    public static SceneContext buildScene(Class<? extends Application> appClass, String fxmlName) {
+        FXMLLoader fxmlLoader = null;
+        Scene scene = null;
+
+        try {
+            fxmlLoader = new FXMLLoader(appClass.getResource(fxmlName));
+            scene = new Scene(fxmlLoader.load());
+
+        } catch (IOException e) {
+            System.err.println("Scene failed to load - " + e.getMessage());
+        }
 
         return new SceneContext(fxmlLoader, scene);
     }
@@ -29,6 +37,7 @@ public class Initializer {
         return stage;
     }
 
+    //Take care to provide a visible (ot null) element
     public static Stage getStage(Node visibleElement) {
         return (Stage) visibleElement.getScene().getWindow();
     }

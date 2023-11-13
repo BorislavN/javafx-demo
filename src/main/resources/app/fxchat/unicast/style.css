@@ -8,22 +8,25 @@
 }
 
 .text-field {
-    -fx-font-size: 16;
+    -fx-font-size: 18;
 }
 
 #announcementMessage {
     -fx-background-radius: 6;
+    -fx-background-color: #515254;
+    -fx-text-fill: #f2f2f2;
 }
 
-#joinPageError {
+#joinPageError,#settingsError {
     -fx-background-radius: 6;
     -fx-background-color: #eb4d42;
     -fx-text-fill: #f2f2f2;
 }
 
 .button {
+   -fx-font-weight: 600;
     -fx-background-radius: 6;
-    -fx-font-size: 20;
+    -fx-font-size: 18;
     -fx-background-color: #515254;
     -fx-text-fill: #f2f2f2;
     -fx-cursor: hand;
