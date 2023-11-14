@@ -4,6 +4,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -11,11 +12,13 @@ import javafx.stage.WindowEvent;
 
 public class ChatController {
     @FXML
-    public Label joinPageError;
+    public Label joinPageError, announcementMessage;
     @FXML
-    public TextField usernameInput;
+    public TextField usernameInput, messageInput;
     @FXML
-    public Button joinBtn, backBtn;
+    public Button joinBtn, backBtn, sendBtn;
+    @FXML
+    public TextArea chatArea;
 
     public void onEnter(ActionEvent event) {
     }
@@ -54,12 +57,22 @@ public class ChatController {
         stage.setScene(sceneContext.getScene());
     }
 
+    public void onShowMessages(ActionEvent event) {
+        event.consume();
+
+        Stage stage = Initializer.buildStage("Direct Messages", Modality.NONE);
+        SceneContext sceneContext = Initializer.buildScene(ChatApp.class, "message-view.fxml");
+
+        stage.setX(200);
+        stage.setY(200);
+
+        stage.setScene(sceneContext.getScene());
+        stage.show();
+    }
+
     public void onClose(WindowEvent event, Stage stage) {
     }
 
     public void configureClient() {
-    }
-
-    public void onShowMessages(ActionEvent event) {
     }
 }

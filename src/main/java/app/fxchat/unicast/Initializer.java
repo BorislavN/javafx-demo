@@ -10,9 +10,6 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class Initializer {
-    //TODO: this class will provide static methods for constructing the popup windows for
-    // "settings" and "direct messages" windows
-
     public static SceneContext buildScene(Class<? extends Application> appClass, String fxmlName) {
         FXMLLoader fxmlLoader = null;
         Scene scene = null;

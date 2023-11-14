@@ -9,9 +9,10 @@
 
 .text-field {
     -fx-font-size: 18;
+    -fx-background-radius: 2;
 }
 
-#contacts{
+#contacts {
     -fx-background-color: #c9c7c7;
 }
 
@@ -27,6 +28,11 @@
     -fx-text-fill: #f2f2f2;
 }
 
+.errorLabel {
+    -fx-background-color: #eb4d42 !important;
+    -fx-alignment: center !important;
+}
+
 .button {
     -fx-font-weight: 600;
     -fx-background-radius: 6;
@@ -38,7 +44,12 @@
 
 .atButton {
     -fx-background-radius: 5;
-    -fx-border-color:  #515254;
+    -fx-border-color: #515254;
     -fx-border-radius: 3;
     -fx-border-width: 4;
+}
+
+.selectedButton {
+    -fx-background-color: #f2f2f2;
+    -fx-text-fill: #515254
 }
