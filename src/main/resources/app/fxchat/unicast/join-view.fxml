@@ -26,17 +26,21 @@
             <Font size="18.0"/>
         </font>
     </Label>
+
     <TextField fx:id="usernameInput" onAction="#onEnter" style="-fx-background-radius: 2;"/>
+
     <HBox alignment="TOP_CENTER" prefHeight="100.0" prefWidth="200.0" spacing="5.0">
         <Button fx:id="joinBtn" alignment="CENTER" mnemonicParsing="false" onAction="#onJoin" text="Join">
             <padding>
                 <Insets bottom="15.0" left="20.0" right="20.0" top="15.0"/>
             </padding>
         </Button>
+
         <Button alignment="CENTER" mnemonicParsing="false" onAction="#showSettings" text="Settings">
             <padding>
                 <Insets bottom="15.0" left="20.0" right="20.0" top="15.0"/>
             </padding>
         </Button>
     </HBox>
+
 </VBox>
