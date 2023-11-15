@@ -4,42 +4,78 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.Set;
+import java.util.regex.Pattern;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ChatUtility {
     public static final String HOST = "localhost";
-    public static final int PORT = 8080;
+    public static final int PORT = 6009;
     public static final int MESSAGE_LIMIT = 300;
     public static final int USERNAME_LIMIT = 30;
 
-    public static String readMessage(SelectionKey key) throws IOException, IllegalStateException {
-        checkIfKeyIsValid(key);
+    public static final String TO_COMMAND = "#to";
+    public static final String JOIN_COMMAND = "#join";
+    public static final String QUIT_COMMAND = "#quit";
+    public static final String MEMBERS_COMMAND = "#members";
 
-        return readMessage((SocketChannel) key.channel());
+    private static final String FROM_FLAG = "#from";
+    private static final String JOINED_FLAG = "#joined";
+    private static final String CHANGED_FLAG = "#changed";
+    private static final String LEFT_FLAG = "#left";
+    private static final String USERNAME_EXCEPTION_FLAG = "#usernameException";
+
+    public static String readMessage(SelectionKey key) throws IOException, IllegalStateException {
+        checkKey(key);
+
+        return read(verifyConnection((SocketChannel) key.channel()));
     }
 
     public static int writeMessage(SelectionKey key, String message) throws IOException, IllegalStateException {
-        checkIfKeyIsValid(key);
+        checkKey(key);
 
-        return writeMessage((SocketChannel) key.channel(), message);
+        return write(verifyConnection((SocketChannel) key.channel()), message);
     }
 
-    public static int writeMessage(SocketChannel channel, String message) throws IOException, IllegalStateException {
-        checkIfSocketIsConnected(channel);
+    //Provide the field capitalized, it "looks" better when the error is displayed ;D
+    public static void validateField(String field, String value) throws IllegalArgumentException {
+        int limit = "username".equalsIgnoreCase(field) ? USERNAME_LIMIT : MESSAGE_LIMIT;
 
-        return write(channel, message);
+        if (value.getBytes().length > limit) {
+            throw new IllegalArgumentException(field + " too long!");
+        }
+
+        if (value.isBlank()) {
+            throw new IllegalArgumentException(field + " can not be blank!");
+        }
+
+        if (Pattern.matches(".*[|\"'`;]+.*", value)) {
+            throw new IllegalArgumentException(field + " can't contain: |\"'`;");
+        }
     }
 
-    public static String readMessage(SocketChannel channel) throws IOException, IllegalStateException {
-        checkIfSocketIsConnected(channel);
+    public static String newFromMessage(SelectionKey origin, String message) {
+        return java.lang.String.format("%s|%s|%s", FROM_FLAG, Attachment.getUsername(origin), message);
+    }
 
-        return read(channel);
+    public static String newJoinedMessage(SelectionKey origin) {
+        return java.lang.String.format("%1$s|%2$s|\"%2$s\" joined the chat!", JOINED_FLAG, Attachment.getUsername(origin));
+    }
+
+    public static String newChangedMessage(SelectionKey origin, String newName) {
+        return java.lang.String.format("%1$s|%2$s|\"%2$s\" changed their username to \"%3$s\"", CHANGED_FLAG, Attachment.getUsername(origin), newName);
+    }
+
+    public static String newLeftMessage(SelectionKey origin) {
+        return String.format("%1$s|%2$s|\"%2$s\" left the chat...", LEFT_FLAG, Attachment.getUsername(origin));
+    }
+
+    public static String newUsernameExceptionMessage(String message) {
+        return String.format("%s|%S", USERNAME_EXCEPTION_FLAG, message);
     }
 
     private static String read(SocketChannel channel) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(MESSAGE_LIMIT);
+        ByteBuffer buffer = ByteBuffer.allocate(MESSAGE_LIMIT + USERNAME_LIMIT);
         StringBuilder output = new StringBuilder();
 
         int bytesRead = channel.read(buffer);
@@ -80,55 +116,25 @@ public class ChatUtility {
         return UTF_8.decode(buffer).toString();
     }
 
-    private static void checkIfSocketIsConnected(SocketChannel channel) throws IllegalStateException {
+    private static SocketChannel verifyConnection(SocketChannel channel) throws IllegalStateException {
+        if (channel == null) {
+            throw new IllegalStateException("SocketChannel is null!");
+        }
+
         if (!channel.isConnected()) {
             throw new IllegalStateException("SocketChannel is not connected!");
         }
+
+        return channel;
     }
 
-    private static void checkIfKeyIsValid(SelectionKey key) throws IllegalStateException {
+    private static void checkKey(SelectionKey key) throws IllegalStateException {
+        if (key == null) {
+            throw new IllegalStateException("SelectionKey is null!");
+        }
+
         if (!key.isValid()) {
             throw new IllegalStateException("SelectionKey invalid!");
-        }
-    }
-
-    public static String validateUsername(String name) throws IllegalArgumentException {
-        if (name.getBytes().length > USERNAME_LIMIT) {
-            throw new IllegalArgumentException("Username too long!");
-        }
-
-        if (name.isBlank()) {
-            throw new IllegalArgumentException("Username can not be blank!");
-        }
-
-        return name;
-    }
-
-    public static String joinMessage(String message) {
-        if (message.startsWith("/user")) {
-            return substringMessage(message, 6) + " joined the chat!";
-        }
-
-        return message + " joined the chat!";
-    }
-
-    public static String prependUsername(SelectionKey key, String message) {
-        return String.format("%s: %s", ConnectionAttachment.getUsername(key), message);
-    }
-
-    public static String leftMessage(SelectionKey key, Set<String> takenNames) {
-        String name = ConnectionAttachment.getUsername(key);
-        //Remove username
-        takenNames.remove(name);
-
-        return name + " left the chat...";
-    }
-
-    public static String substringMessage(String message, int start) throws IllegalArgumentException {
-        try {
-            return message.substring(start);
-        } catch (IndexOutOfBoundsException e) {
-            throw new IllegalArgumentException("Invalid username!");
         }
     }
 }

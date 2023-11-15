@@ -1,5 +1,6 @@
 package app.fxchat.unicast.nio;
 
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -24,33 +25,33 @@ public class ChatClient implements Runnable {
 
     @Override
     public void run() {
-        ConsoleReader reader = new ConsoleReader(this.bufferedReader, this.messageQueue);
-        Thread readerThread = new Thread(reader);
-        readerThread.start();
-
-        String message;
-
-        try {
-            do {
-                message = this.messageQueue.poll();
-
-                if (message != null) {
-                    ChatUtility.writeMessage(this.client, message);
-                }
-
-                String response = ChatUtility.readMessage(this.client);
-
-                if (!response.isBlank()) {
-                    System.out.println(response);
-                }
-
-            } while (!"/quit".equals(message) && readerThread.isAlive());
-
-        } catch (IOException | IllegalStateException e) {
-            System.err.println("Client encountered exception - " + e.getMessage());
-        } finally {
-            this.shutdown();
-        }
+//        ConsoleReader reader = new ConsoleReader(this.bufferedReader, this.messageQueue);
+//        Thread readerThread = new Thread(reader);
+//        readerThread.start();
+//
+//        String message;
+//
+//        try {
+//            do {
+//                message = this.messageQueue.poll();
+//
+//                if (message != null) {
+//                    ChatUtility.writeMessage(this.client, message);
+//                }
+//
+//                String response = ChatUtility.readMessage(this.client);
+//
+//                if (!response.isBlank()) {
+//                    System.out.println(response);
+//                }
+//
+//            } while (!"/quit".equals(message) && readerThread.isAlive());
+//
+//        } catch (IOException | IllegalStateException e) {
+//            System.err.println("Client encountered exception - " + e.getMessage());
+//        } finally {
+//            this.shutdown();
+//        }
     }
 
     private void shutdown() {
