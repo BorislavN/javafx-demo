@@ -18,27 +18,28 @@ public class ChatUtility {
     public static final String JOIN_COMMAND = "#join";
     public static final String QUIT_COMMAND = "#quit";
     public static final String MEMBERS_COMMAND = "#members";
+    public static final String PUBLIC_MESSAGE_COMMAND = "#public";
 
-    private static final String FROM_FLAG = "#from";
-    private static final String JOINED_FLAG = "#joined";
-    private static final String CHANGED_FLAG = "#changed";
-    private static final String LEFT_FLAG = "#left";
-    private static final String USERNAME_EXCEPTION_FLAG = "#usernameException";
+    public static final String FROM_FLAG = "#from";
+    public static final String JOINED_FLAG = "#joined";
+    public static final String CHANGED_FLAG = "#changed";
+    public static final String LEFT_FLAG = "#left";
+    public static final String USERNAME_EXCEPTION_FLAG = "#usernameException";
 
-    public static String readMessage(SelectionKey key) throws IOException, IllegalStateException {
+    public static String readMessage(SelectionKey key) throws IOException {
         checkKey(key);
 
         return read(verifyConnection((SocketChannel) key.channel()));
     }
 
-    public static int writeMessage(SelectionKey key, String message) throws IOException, IllegalStateException {
+    public static int writeMessage(SelectionKey key, String message) throws IOException {
         checkKey(key);
 
         return write(verifyConnection((SocketChannel) key.channel()), message);
     }
 
     //Provide the field capitalized, it "looks" better when the error is displayed ;D
-    public static void validateField(String field, String value) throws IllegalArgumentException {
+    public static void validateField(String field, String value) {
         int limit = "username".equalsIgnoreCase(field) ? USERNAME_LIMIT : MESSAGE_LIMIT;
 
         if (value.getBytes().length > limit) {
@@ -54,24 +55,30 @@ public class ChatUtility {
         }
     }
 
+    public static String joinedMessage(String username) {
+        return String.format("\"%s\" joined the chat!", username);
+    }
+
+    public static String changedMessage(String oldName, String newName) {
+        return String.format("\"%s\" changed their username to \"%s\"", oldName, newName);
+    }
+
+    public static String leftMessage(String username) {
+        return String.format("\"%s\" left the chat...", username);
+    }
+
     public static String newFromMessage(SelectionKey origin, String message) {
         return java.lang.String.format("%s|%s|%s", FROM_FLAG, Attachment.getUsername(origin), message);
     }
 
-    public static String newJoinedMessage(SelectionKey origin) {
-        return java.lang.String.format("%1$s|%2$s|\"%2$s\" joined the chat!", JOINED_FLAG, Attachment.getUsername(origin));
-    }
-
-    public static String newChangedMessage(SelectionKey origin, String newName) {
-        return java.lang.String.format("%1$s|%2$s|\"%2$s\" changed their username to \"%3$s\"", CHANGED_FLAG, Attachment.getUsername(origin), newName);
-    }
-
-    public static String newLeftMessage(SelectionKey origin) {
-        return String.format("%1$s|%2$s|\"%2$s\" left the chat...", LEFT_FLAG, Attachment.getUsername(origin));
-    }
-
     public static String newUsernameExceptionMessage(String message) {
         return String.format("%s|%S", USERNAME_EXCEPTION_FLAG, message);
+    }
+
+    public static String generateMessage(String command, String data, String... arguments) {
+        String args = String.join(":", arguments);
+
+        return String.join("|", command, args, data);
     }
 
     private static String read(SocketChannel channel) throws IOException {
@@ -116,7 +123,7 @@ public class ChatUtility {
         return UTF_8.decode(buffer).toString();
     }
 
-    private static SocketChannel verifyConnection(SocketChannel channel) throws IllegalStateException {
+    private static SocketChannel verifyConnection(SocketChannel channel) {
         if (channel == null) {
             throw new IllegalStateException("SocketChannel is null!");
         }
@@ -128,7 +135,7 @@ public class ChatUtility {
         return channel;
     }
 
-    private static void checkKey(SelectionKey key) throws IllegalStateException {
+    private static void checkKey(SelectionKey key) {
         if (key == null) {
             throw new IllegalStateException("SelectionKey is null!");
         }

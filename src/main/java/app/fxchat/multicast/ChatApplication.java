@@ -1,5 +1,6 @@
 package app.fxchat.multicast;
 
+import app.fxchat.multicast.fx.ChatController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;

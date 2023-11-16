@@ -1,4 +1,4 @@
-package app.fxchat.unicast;
+package app.fxchat.unicast.fx;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

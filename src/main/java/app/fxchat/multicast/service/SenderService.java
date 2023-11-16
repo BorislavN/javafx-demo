@@ -1,5 +1,6 @@
-package app.fxchat.multicast;
+package app.fxchat.multicast.service;
 
+import app.fxchat.multicast.client.MulticastClient;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
@@ -19,7 +20,7 @@ public class SenderService extends Service<Void> {
         this.currentMessage = null;
 
         //With this executor, majority of messages reuse the thread
-        //You can see for yourself - uncomment the "println" statement in app.fxchat.multicast.SenderTask
+        //You can see for yourself - uncomment the "println" statement in app.fxchat.multicast.service.SenderTask
         this.setExecutor(Executors.newCachedThreadPool(r -> {
             Thread thread = new Thread(r);
             thread.setDaemon(true);

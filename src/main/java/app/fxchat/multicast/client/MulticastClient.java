@@ -1,4 +1,4 @@
-package app.fxchat.multicast;
+package app.fxchat.multicast.client;
 
 import java.io.IOException;
 import java.net.*;

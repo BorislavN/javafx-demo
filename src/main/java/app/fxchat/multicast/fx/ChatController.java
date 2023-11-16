@@ -1,5 +1,8 @@
-package app.fxchat.multicast;
+package app.fxchat.multicast.fx;
 
+import app.fxchat.multicast.service.ReceiverService;
+import app.fxchat.multicast.service.SenderService;
+import app.fxchat.multicast.client.MulticastClient;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

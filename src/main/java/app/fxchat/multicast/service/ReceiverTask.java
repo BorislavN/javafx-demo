@@ -1,5 +1,6 @@
-package app.fxchat.multicast;
+package app.fxchat.multicast.service;
 
+import app.fxchat.multicast.client.MulticastClient;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;

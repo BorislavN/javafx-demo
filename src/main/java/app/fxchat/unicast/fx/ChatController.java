@@ -1,5 +1,6 @@
-package app.fxchat.unicast;
+package app.fxchat.unicast.fx;
 
+import app.fxchat.unicast.ChatApp;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;

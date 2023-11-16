@@ -1,5 +1,7 @@
 package app.fxchat.unicast;
 
+import app.fxchat.unicast.fx.Initializer;
+import app.fxchat.unicast.fx.SceneContext;
 import javafx.application.Application;
 import javafx.stage.Stage;
 

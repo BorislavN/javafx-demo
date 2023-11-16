@@ -1,5 +1,6 @@
-package app.fxchat.multicast;
+package app.fxchat.multicast.service;
 
+import app.fxchat.multicast.client.MulticastClient;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;

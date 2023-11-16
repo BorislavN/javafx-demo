@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 <VBox alignment="CENTER" prefHeight="300.0" prefWidth="450.0" spacing="15.0" xmlns="http://javafx.com/javafx/21"
-      xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.fxchat.multicast.SettingsController">
+      xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.fxchat.multicast.fx.SettingsController">
     <padding>
         <Insets bottom="20.0" left="50.0" right="50.0" top="20.0"/>
     </padding>

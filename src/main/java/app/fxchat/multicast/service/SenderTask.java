@@ -1,5 +1,6 @@
-package app.fxchat.multicast;
+package app.fxchat.multicast.service;
 
+import app.fxchat.multicast.client.MulticastClient;
 import javafx.concurrent.Task;
 
 public class SenderTask extends Task<Void> {

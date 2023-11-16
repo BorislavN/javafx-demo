@@ -1,5 +1,6 @@
-package app.fxchat.multicast;
+package app.fxchat.multicast.fx;
 
+import app.fxchat.multicast.client.MulticastClient;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
