@@ -9,6 +9,9 @@ import java.nio.channels.SocketChannel;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import static app.fxchat.unicast.nio.Constants.HOST;
+import static app.fxchat.unicast.nio.Constants.PORT;
+
 //TODO: rework client for javafx application
 public class ChatClient implements Runnable {
     private final SocketChannel client;
@@ -16,7 +19,7 @@ public class ChatClient implements Runnable {
     private final BufferedReader bufferedReader;
 
     public ChatClient() throws IOException {
-        this.client = SocketChannel.open(new InetSocketAddress(ChatUtility.HOST, ChatUtility.PORT));
+        this.client = SocketChannel.open(new InetSocketAddress(HOST, PORT));
         this.messageQueue = new ArrayBlockingQueue<>(21);
         this.bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 

@@ -4,38 +4,36 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.Set;
 import java.util.regex.Pattern;
 
+import static app.fxchat.unicast.nio.Constants.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ChatUtility {
-    public static final String HOST = "localhost";
-    public static final int PORT = 6009;
-    public static final int MESSAGE_LIMIT = 300;
-    public static final int USERNAME_LIMIT = 30;
-
-    public static final String TO_COMMAND = "#to";
-    public static final String JOIN_COMMAND = "#join";
-    public static final String QUIT_COMMAND = "#quit";
-    public static final String MEMBERS_COMMAND = "#members";
-    public static final String PUBLIC_MESSAGE_COMMAND = "#public";
-
-    public static final String FROM_FLAG = "#from";
-    public static final String JOINED_FLAG = "#joined";
-    public static final String CHANGED_FLAG = "#changed";
-    public static final String LEFT_FLAG = "#left";
-    public static final String USERNAME_EXCEPTION_FLAG = "#usernameException";
 
     public static String readMessage(SelectionKey key) throws IOException {
         checkKey(key);
 
-        return read(verifyConnection((SocketChannel) key.channel()));
+        return readMessage((SocketChannel) key.channel());
     }
 
     public static int writeMessage(SelectionKey key, String message) throws IOException {
         checkKey(key);
 
-        return write(verifyConnection((SocketChannel) key.channel()), message);
+        return writeMessage((SocketChannel) key.channel(), message);
+    }
+
+    public static int writeMessage(SocketChannel channel, String message) throws IOException {
+        verifyConnection(channel);
+
+        return write(channel, message);
+    }
+
+    public static String readMessage(SocketChannel channel) throws IOException {
+        verifyConnection(channel);
+
+        return read(channel);
     }
 
     //Provide the field capitalized, it "looks" better when the error is displayed ;D
@@ -55,30 +53,46 @@ public class ChatUtility {
         }
     }
 
-    public static String joinedMessage(String username) {
-        return String.format("\"%s\" joined the chat!", username);
+    public static String newJoinResponse(String username) {
+        return generateMessage(JOINED_FLAG, String.format("\"%s\" joined the chat!", username), username);
     }
 
-    public static String changedMessage(String oldName, String newName) {
-        return String.format("\"%s\" changed their username to \"%s\"", oldName, newName);
+    public static String newChangedNameResponse(String oldName, String newName) {
+        return generateMessage(CHANGED_FLAG, String.format("\"%s\" changed their username to \"%s\"", oldName, newName), oldName, newName);
     }
 
-    public static String leftMessage(String username) {
-        return String.format("\"%s\" left the chat...", username);
+    public static String newLeftResponse(String username) {
+        return generateMessage(LEFT_FLAG, String.format("\"%s\" left the chat...", username), username);
     }
 
-    public static String newFromMessage(SelectionKey origin, String message) {
-        return java.lang.String.format("%s|%s|%s", FROM_FLAG, Attachment.getUsername(origin), message);
+    public static String newDirectMessageResponse(String origin, String message) {
+        return generateMessage(FROM_FLAG, message, origin);
     }
 
-    public static String newUsernameExceptionMessage(String message) {
-        return String.format("%s|%S", USERNAME_EXCEPTION_FLAG, message);
+    public static String newUsernameExceptionResponse(String message) {
+        return generateMessage(USERNAME_EXCEPTION_FLAG, message);
     }
 
-    public static String generateMessage(String command, String data, String... arguments) {
-        String args = String.join(":", arguments);
+    public static String newMembersResponse(Set<String> usernames) {
+        return generateMessage(MEMBERS_COMMAND, String.join(ARRAY_DELIMITER, usernames));
+    }
 
-        return String.join("|", command, args, data);
+    public static String newPublicMessage(String message) {
+        return generateMessage(PUBLIC_MESSAGE_COMMAND, message);
+    }
+
+    public static String newJoinRequest(String username) {
+        return generateMessage(JOIN_COMMAND, username);
+    }
+
+    public static String newDirectMessageRequest(String destination, String message) {
+        return generateMessage(TO_COMMAND, message, destination);
+    }
+
+    private static String generateMessage(String command, String data, String... arguments) {
+        String args = String.join(ARRAY_DELIMITER, arguments);
+
+        return String.join(COMMAND_DELIMITER, command, args, data);
     }
 
     private static String read(SocketChannel channel) throws IOException {
@@ -123,7 +137,7 @@ public class ChatUtility {
         return UTF_8.decode(buffer).toString();
     }
 
-    private static SocketChannel verifyConnection(SocketChannel channel) {
+    private static void verifyConnection(SocketChannel channel) {
         if (channel == null) {
             throw new IllegalStateException("SocketChannel is null!");
         }
@@ -131,8 +145,6 @@ public class ChatUtility {
         if (!channel.isConnected()) {
             throw new IllegalStateException("SocketChannel is not connected!");
         }
-
-        return channel;
     }
 
     private static void checkKey(SelectionKey key) {
