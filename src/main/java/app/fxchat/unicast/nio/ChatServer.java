@@ -8,14 +8,13 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.time.LocalTime;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static app.fxchat.unicast.nio.Constants.*;
+import static app.fxchat.unicast.nio.Constants.HOST;
+import static app.fxchat.unicast.nio.Constants.PORT;
 import static java.nio.channels.SelectionKey.*;
 
-//TODO: implement #public command, add option to broadcast to all (currently except origin)
 public class ChatServer implements Runnable {
     private final ServerSocketChannel server;
     private final Selector mainSelector;
@@ -51,11 +50,9 @@ public class ChatServer implements Runnable {
     }
 
     private void checkSelectorForEvents(Selector selector, String type) throws IOException {
-        Iterator<SelectionKey> iterator = this.getReadySet(selector);
+        selector.select();
 
-        while (iterator != null && iterator.hasNext()) {
-            SelectionKey key = iterator.next();
-
+        for (SelectionKey key : selector.selectedKeys()) {
             try {
                 if ("read".equals(type)) {
                     this.handleConnection(key);
@@ -65,28 +62,19 @@ public class ChatServer implements Runnable {
                 if ("write".equals(type)) {
                     this.handlePendingMessages(key);
                 }
+
             } catch (IllegalArgumentException e) {
                 Attachment.enqueuePriorityMessage(key, e.getMessage());
-
-                //Register the channel for writing (if already registered - the interest set is reset)
                 this.registerInWriteSelector(key);
+
+                this.logError("IllegalArgumentException caught", e);
 
             } catch (SocketException | IllegalStateException e) {
                 this.removeConnection(key);
+
+                this.logError("Removing connection", e);
             }
-
-            iterator.remove();
         }
-    }
-
-    private Iterator<SelectionKey> getReadySet(Selector selector) throws IOException {
-        int readyCount = selector.select();
-
-        if (readyCount > 0) {
-            return selector.selectedKeys().iterator();
-        }
-
-        return null;
     }
 
     private void handleConnection(SelectionKey key) throws IOException {
@@ -111,22 +99,62 @@ public class ChatServer implements Runnable {
 
             this.log(message);
 
-            this.handleQuitCommand(key, data);
+            switch (data[0]) {
+                case "#join" -> this.handleJoinCommand(key, data);
 
-            this.handleJoinCommand(key, data);
+                case "#members" -> this.handleMembersCommand(key);
 
-            this.handleMembersCommand(key, data);
+                case "#to" -> this.handleToCommand(key, data);
 
-            this.handleMessage(key, data);
+                case "#public" -> this.handlePublicCommand(key, data);
+
+                case "#quit", default -> this.handleQuitCommand(key);
+            }
         }
     }
 
-    private void handleQuitCommand(SelectionKey key, String[] data) throws IOException {
-        if (data.length == 0 || QUIT_COMMAND.equals(data[0])) {
-            this.removeConnection(key);
+    private void handleJoinCommand(SelectionKey key, String[] data) throws IOException {
+        String proposedName = data[1];
+        String currentName = Attachment.getUsername(key);
 
-            this.enqueueMessage(key, null, ChatUtility.newLeftResponse(Attachment.getUsername(key)));
+        Set<String> usernames = this.getTakenUsernames();
+
+        if (usernames.contains(proposedName) && !currentName.equals(proposedName)) {
+            throw new IllegalArgumentException(ChatUtility.newUsernameExceptionResponse("Username is already taken!"));
         }
+
+        if (!usernames.contains(proposedName)) {
+            Attachment.setUsername(key, proposedName);
+
+            String message = currentName == null
+                    ? ChatUtility.newJoinResponse(proposedName)
+                    : ChatUtility.newChangedNameResponse(currentName, proposedName);
+
+            this.enqueueInAll(message, null);
+        }
+    }
+
+    private void handleMembersCommand(SelectionKey key) throws IOException {
+        Attachment.enqueuePriorityMessage(key, ChatUtility.newMembersResponse(this.getTakenUsernames()));
+        this.registerInWriteSelector(key);
+    }
+
+    private void handleToCommand(SelectionKey key, String[] data) {
+        String origin = Attachment.getUsername(key);
+        String destination = data[1];
+
+        this.getAllConnections().stream()
+                .filter(k -> destination.equals(Attachment.getUsername(k)))
+                .forEach(k -> Attachment.enqueueMessage(k, ChatUtility.newDirectMessageResponse(origin, data[2])));
+    }
+
+    private void handlePublicCommand(SelectionKey origin, String[] data) throws IOException {
+        this.enqueueInAll(data[2], origin);
+    }
+
+    private void handleQuitCommand(SelectionKey key) throws IOException {
+        this.removeConnection(key);
+        this.enqueueInAll(ChatUtility.newLeftResponse(Attachment.getUsername(key)), key);
     }
 
     private void removeConnection(SelectionKey key) throws IOException {
@@ -134,75 +162,20 @@ public class ChatServer implements Runnable {
         key.channel().close();
     }
 
-    private void handleJoinCommand(SelectionKey key, String[] data) throws IOException {
-        if (JOIN_COMMAND.equals(data[0])) {
-            String proposedName = data[1];
-            String currentName = Attachment.getUsername(key);
-
-            Set<String> usernames = this.getTakenUsernames();
-
-            if (usernames.contains(proposedName) && !currentName.equals(proposedName)) {
-                throw new IllegalArgumentException(ChatUtility.newUsernameExceptionResponse("Username is already taken!"));
-            }
-
-            if (!usernames.contains(proposedName)) {
-                Attachment.setUsername(key, proposedName);
-
-                String message = currentName == null
-                        ? ChatUtility.newJoinResponse(proposedName)
-                        : ChatUtility.newChangedNameResponse(currentName, proposedName);
-
-
-                this.enqueueMessage(key, null, message);
-            }
-        }
-    }
-
-    private void handleMembersCommand(SelectionKey key, String[] data) throws IOException {
-        if (TO_COMMAND.equals(data[0])) {
-            Attachment.enqueuePriorityMessage(key, ChatUtility.newMembersResponse(this.getTakenUsernames()));
-            this.registerInWriteSelector(key);
-        }
-    }
-
-    private void handleMessage(SelectionKey origin, String[] data) throws IOException {
-        if (TO_COMMAND.equals(data[0])) {
-            this.enqueueMessage(origin, data[1], data[2]);
-        }
-
-        //If there is no command
-        if (data.length == 1) {
-            this.enqueueMessage(origin, null, data[0]);
-        }
-    }
-
-    private void enqueueMessage(SelectionKey origin, String destination, String message) throws IOException {
+    //If origin is null, the message will be enqueued in all channels
+    //If origin is specified  - it will be excluded
+    private void enqueueInAll(String message, SelectionKey origin) throws IOException {
         for (SelectionKey connection : this.getAllConnections()) {
-            if (origin != connection) {
-                if (destination != null) {
-                    if (Attachment.getUsername(connection).equals(destination)) {
-                        String response = ChatUtility.newDirectMessageResponse(Attachment.getUsername(origin), message);
-
-                        Attachment.enqueueMessage(connection, response);
-
-                        this.registerInWriteSelector(connection);
-
-                        break;
-                    }
-
-                    continue;
-                }
-
-                //We reach this code only if the message is public
+            if (connection != origin) {
                 Attachment.enqueueMessage(connection, message);
                 this.registerInWriteSelector(connection);
             }
         }
     }
 
+    //Register the channel for writing (if already registered - the interest set is reset)
     private void registerInWriteSelector(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
-
         channel.register(this.writeSelector, OP_WRITE, key.attachment());
     }
 
@@ -232,6 +205,7 @@ public class ChatServer implements Runnable {
             this.mainSelector.close();
             this.writeSelector.close();
             this.server.close();
+
         } catch (IOException e) {
             this.logError("Exception happened while server shutdown", e);
         }

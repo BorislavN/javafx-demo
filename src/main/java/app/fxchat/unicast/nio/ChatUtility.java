@@ -54,15 +54,15 @@ public class ChatUtility {
     }
 
     public static String newJoinResponse(String username) {
-        return generateMessage(JOINED_FLAG, String.format("\"%s\" joined the chat!", username), username);
+        return generateMessage(JOINED_FLAG, java.lang.String.format("\"%s\" joined the chat!", username), username);
     }
 
     public static String newChangedNameResponse(String oldName, String newName) {
-        return generateMessage(CHANGED_FLAG, String.format("\"%s\" changed their username to \"%s\"", oldName, newName), oldName, newName);
+        return generateMessage(CHANGED_FLAG, java.lang.String.format("\"%s\" changed their username to \"%s\"", oldName, newName), oldName, newName);
     }
 
     public static String newLeftResponse(String username) {
-        return generateMessage(LEFT_FLAG, String.format("\"%s\" left the chat...", username), username);
+        return generateMessage(LEFT_FLAG, java.lang.String.format("\"%s\" left the chat...", username), username);
     }
 
     public static String newDirectMessageResponse(String origin, String message) {
@@ -74,7 +74,7 @@ public class ChatUtility {
     }
 
     public static String newMembersResponse(Set<String> usernames) {
-        return generateMessage(MEMBERS_COMMAND, String.join(ARRAY_DELIMITER, usernames));
+        return generateMessage(MEMBERS_COMMAND, java.lang.String.join(ARRAY_DELIMITER, usernames));
     }
 
     public static String newPublicMessage(String message) {
@@ -89,10 +89,19 @@ public class ChatUtility {
         return generateMessage(TO_COMMAND, message, destination);
     }
 
-    private static String generateMessage(String command, String data, String... arguments) {
-        String args = String.join(ARRAY_DELIMITER, arguments);
+    public static String newQuitRequest() {
+        return QUIT_COMMAND;
+    }
 
-        return String.join(COMMAND_DELIMITER, command, args, data);
+    public static String newMembersRequest() {
+        return MEMBERS_COMMAND;
+    }
+
+
+    private static String generateMessage(String command, String data, String... arguments) {
+        String args = java.lang.String.join(ARRAY_DELIMITER, arguments);
+
+        return java.lang.String.join(COMMAND_DELIMITER, command, args, data);
     }
 
     private static String read(SocketChannel channel) throws IOException {
