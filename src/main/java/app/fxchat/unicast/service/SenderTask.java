@@ -21,11 +21,7 @@ public class SenderTask extends Task<Void> {
         }
 
         if (!this.isCancelled()) {
-            try {
                 this.client.sendMessage(this.message);
-            } catch (IOException e) {
-                System.err.println("Task failed to send message - " + this.message);
-            }
         }
 
         return null;

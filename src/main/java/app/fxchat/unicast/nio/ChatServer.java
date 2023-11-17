@@ -8,6 +8,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.time.LocalTime;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,9 +51,11 @@ public class ChatServer implements Runnable {
     }
 
     private void checkSelectorForEvents(Selector selector, String type) throws IOException {
-        selector.select();
+        Iterator<SelectionKey> iterator = this.getReadySet(selector);
 
-        for (SelectionKey key : selector.selectedKeys()) {
+        while (iterator != null && iterator.hasNext()) {
+            SelectionKey key = iterator.next();
+
             try {
                 if ("read".equals(type)) {
                     this.handleConnection(key);
@@ -74,7 +77,20 @@ public class ChatServer implements Runnable {
 
                 this.logError("Removing connection", e);
             }
+
+            iterator.remove();
         }
+    }
+
+    private Iterator<SelectionKey> getReadySet(Selector selector) throws IOException {
+        int readyCount = selector.selectNow();
+
+        if (readyCount > 0) {
+            Set<SelectionKey> selectedKeys = selector.selectedKeys();
+            return selectedKeys.iterator();
+        }
+
+        return null;
     }
 
     private void handleConnection(SelectionKey key) throws IOException {
@@ -108,7 +124,7 @@ public class ChatServer implements Runnable {
 
                 case "#public" -> this.handlePublicCommand(key, data);
 
-                case "#quit", default -> this.handleQuitCommand(key);
+                default -> this.handleQuitCommand(key);
             }
         }
     }
@@ -154,7 +170,12 @@ public class ChatServer implements Runnable {
 
     private void handleQuitCommand(SelectionKey key) throws IOException {
         this.removeConnection(key);
-        this.enqueueInAll(ChatUtility.newLeftResponse(Attachment.getUsername(key)), key);
+
+        String username = Attachment.getUsername(key);
+
+        if (username != null) {
+            this.enqueueInAll(ChatUtility.newLeftResponse(Attachment.getUsername(key)), key);
+        }
     }
 
     private void removeConnection(SelectionKey key) throws IOException {

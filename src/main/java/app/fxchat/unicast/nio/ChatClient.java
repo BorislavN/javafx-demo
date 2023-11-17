@@ -17,24 +17,36 @@ public class ChatClient {
     public ChatClient() throws IOException {
         this.channel = SocketChannel.open(new InetSocketAddress(HOST, PORT));
         this.channel.configureBlocking(false);
-        this.username=null;
+        this.username = null;
     }
 
-    private void shutdown() {
+    public void shutdown() {
         try {
             this.channel.shutdownInput();
             this.channel.shutdownOutput();
             this.channel.close();
+
         } catch (IOException e) {
-            System.err.println("Encountered exception while trying to close client - " + e.getMessage());
+            this.printException("Channel failed to close", e);
         }
     }
 
-    public void sendMessage(String message) throws IOException {
-        ChatUtility.writeMessage(this.channel,message);
+    public void sendMessage(String message) {
+        try {
+            ChatUtility.writeMessage(this.channel, message);
+        } catch (IOException e) {
+            printException("Message WRITE failed", e);
+        }
     }
 
-    public void receiveMessage(String message) {
+    public String receiveMessage() {
+        try {
+          return  ChatUtility.readMessage(this.channel);
+        } catch (IOException e) {
+            printException("Message READ failed", e);
+        }
+
+        return null;
     }
 
     public String getUsername() {
@@ -42,6 +54,20 @@ public class ChatClient {
     }
 
     public void setUsername(String username) {
+        ChatUtility.validateField("Username", username);
+
         this.username = username;
+    }
+
+    public static void printException(String message, Throwable err) {
+        System.err.printf("%s - %s%n", message, err.getMessage());
+    }
+
+    public String wrapMessage(String message) {
+        if (this.username != null) {
+            return String.format("%s: %s", this.username, message);
+        }
+
+        return message;
     }
 }

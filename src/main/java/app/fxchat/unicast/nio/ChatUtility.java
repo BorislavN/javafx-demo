@@ -99,9 +99,13 @@ public class ChatUtility {
 
 
     private static String generateMessage(String command, String data, String... arguments) {
-        String args = java.lang.String.join(ARRAY_DELIMITER, arguments);
+        if (arguments.length > 0) {
+            String args = String.join(ARRAY_DELIMITER, arguments);
 
-        return java.lang.String.join(COMMAND_DELIMITER, command, args, data);
+            return String.join(COMMAND_DELIMITER, command, args, data);
+        }
+
+        return String.join(COMMAND_DELIMITER, command, data);
     }
 
     private static String read(SocketChannel channel) throws IOException {

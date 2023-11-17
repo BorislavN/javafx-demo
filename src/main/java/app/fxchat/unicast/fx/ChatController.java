@@ -1,8 +1,11 @@
 package app.fxchat.unicast.fx;
 
 import app.fxchat.unicast.ChatApp;
+import app.fxchat.unicast.nio.ChatClient;
+import app.fxchat.unicast.nio.ChatUtility;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -11,26 +14,47 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+import java.io.IOException;
+
 public class ChatController {
     @FXML
-    public Label joinPageError, announcementMessage;
+    private Label joinPageError, announcementMessage;
     @FXML
-    public TextField usernameInput, messageInput;
+    private TextField usernameInput, messageInput;
     @FXML
-    public Button joinBtn, backBtn, sendBtn;
+    private Button joinBtn, backBtn, sendBtn;
     @FXML
-    public TextArea chatArea;
+    private TextArea chatArea;
+    private ChatClient client;
 
     public void onEnter(ActionEvent event) {
+        event.consume();
+
+        String targetId = ((Node) event.getTarget()).getId();
+
+        if ("usernameInput".equals(targetId)) {
+            this.joinBtn.fire();
+        }
+
+        if ("messageInput".equals(targetId)) {
+            this.sendBtn.fire();
+        }
     }
 
     public void onJoin(ActionEvent event) {
         event.consume();
 
-        SceneContext sceneContext = Initializer.buildScene(ChatApp.class, "chat-view.fxml");
+        String username = this.usernameInput.getText();
+        System.out.println(ChatUtility.newJoinRequest(username));
+        this.client.sendMessage(ChatUtility.newJoinRequest(username));
+        String response = this.client.receiveMessage();
 
-        Stage stage = Initializer.getStage(this.joinBtn);
-        stage.setScene(sceneContext.getScene());
+        System.out.println(response);
+
+//        SceneContext sceneContext = Initializer.buildScene(ChatApp.class, "chat-view.fxml");
+//
+//        Stage stage = Initializer.getStage(this.joinBtn);
+//        stage.setScene(sceneContext.getScene());
     }
 
     public void showSettings(ActionEvent event) {
@@ -47,6 +71,7 @@ public class ChatController {
     }
 
     public void onSend(ActionEvent event) {
+        //TODO: ???
     }
 
     public void onChangeName(ActionEvent event) {
@@ -72,8 +97,24 @@ public class ChatController {
     }
 
     public void onClose(WindowEvent event, Stage stage) {
+        event.consume();
+
+        if (this.client != null) {
+            this.client.sendMessage(ChatUtility.newQuitRequest());
+        }
+
+        if (this.client != null) {
+            this.client.shutdown();
+        }
+
+        stage.close();
     }
 
     public void configureClient() {
+        try {
+            this.client = new ChatClient();
+        } catch (IOException e) {
+           ChatClient.printException("Client initialization failed",e);
+        }
     }
 }

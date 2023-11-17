@@ -17,11 +17,11 @@ module app.fxchat {
     //Unicast
     opens app.fxchat.unicast to javafx.fxml;
     opens app.fxchat.unicast.fx to javafx.fxml;
-//    opens app.fxchat.unicast.service to javafx.fxml;
-//    opens app.fxchat.unicast.nio to javafx.fxml;
+    opens app.fxchat.unicast.service to javafx.fxml;
+    opens app.fxchat.unicast.nio to javafx.fxml;
 
     exports app.fxchat.unicast;
     exports app.fxchat.unicast.fx;
-//    exports app.fxchat.unicast.service;
-//    exports app.fxchat.unicast.nio;
+    exports app.fxchat.unicast.service;
+    exports app.fxchat.unicast.nio;
 }
