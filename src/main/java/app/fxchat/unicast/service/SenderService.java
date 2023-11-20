@@ -23,6 +23,10 @@ public class SenderService extends Service<Void> {
         this.currentMessage = currentMessage;
     }
 
+    public String getCurrentMessage() {
+        return this.currentMessage;
+    }
+
     @Override
     protected Task<Void> createTask() {
         return new SenderTask(this.client, this.currentMessage);

@@ -1,10 +1,10 @@
 package app.fxchat.unicast.service;
 
 import app.fxchat.unicast.nio.ChatClient;
+import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
 
-//TODO: finish implementation
 public class ReceiverTask extends Task<Void> {
     private final ChatClient client;
     private final StringProperty latestMessage;
@@ -15,28 +15,19 @@ public class ReceiverTask extends Task<Void> {
     }
 
     @Override
-    protected Void call() throws Exception {
-//        Selector selector = this.client.getSelector();
-//
-//
-//        while (this.client.isLive()) {
-//            //The "select" is blocking to save CPU resources, if the thread is interrupted, the selector unblocks
-//            selector.select();
-//
-//            if (this.isCancelled() || !selector.isOpen()) {
-//                break;
-//            }
-//
-//            for (SelectionKey key : selector.selectedKeys()) {
-//                if (key.isValid() && key.isReadable()) {
-//                    String message = this.client.receiveMessage();
-//
-//                    if (message != null) {
-//                        Platform.runLater(() -> this.messageList.add(message));
-//                    }
-//                }
-//            }
-//        }
+    protected Void call() {
+        while (this.client.isLive()) {
+            if (this.isCancelled()) {
+                break;
+            }
+
+            String message = this.client.receiveMessage();
+
+            if (message != null) {
+                System.out.println("Task received message - "+message);
+                Platform.runLater(() -> this.latestMessage.setValue(message));
+            }
+        }
 
         return null;
     }

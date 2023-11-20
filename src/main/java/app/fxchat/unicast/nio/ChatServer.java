@@ -9,6 +9,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.time.LocalTime;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,14 +20,12 @@ import static java.nio.channels.SelectionKey.*;
 public class ChatServer implements Runnable {
     private final ServerSocketChannel server;
     private final Selector mainSelector;
-    private final Selector writeSelector;
     private boolean receivedAConnection;
 
     public ChatServer() throws IOException {
         this.server = ServerSocketChannel.open();
         this.server.bind(new InetSocketAddress(HOST, PORT));
         this.mainSelector = Selector.open();
-        this.writeSelector = Selector.open();
         this.receivedAConnection = false;
 
         this.server.configureBlocking(false);
@@ -37,10 +36,32 @@ public class ChatServer implements Runnable {
     public void run() {
         while (this.hasConnections()) {
             try {
-                //Check mainSelector for events
-                this.checkSelectorForEvents(this.mainSelector, "read");
-                //Check writeSelector for events
-                this.checkSelectorForEvents(this.writeSelector, "write");
+                Iterator<SelectionKey> iterator = this.getReadySet(this.mainSelector);
+
+                while (iterator != null && iterator.hasNext()) {
+                    SelectionKey key = iterator.next();
+
+                    try {
+                        this.handleConnection(key);
+
+                        this.handleIncomingData(key);
+
+                        this.handlePendingMessages(key);
+
+                    } catch (IllegalArgumentException e) {
+                        Attachment.enqueuePriorityMessage(key, e.getMessage());
+                        this.registerInWriteSelector(key);
+
+                        this.logError("IllegalArgumentException caught", e);
+
+                    } catch (SocketException | IllegalStateException e) {
+                        this.removeConnection(key);
+
+                        this.logError("Removing connection", e);
+                    }
+
+                    iterator.remove();
+                }
 
             } catch (IOException e) {
                 this.logError("Server encountered an Exception", e);
@@ -50,40 +71,8 @@ public class ChatServer implements Runnable {
         this.shutdown();
     }
 
-    private void checkSelectorForEvents(Selector selector, String type) throws IOException {
-        Iterator<SelectionKey> iterator = this.getReadySet(selector);
-
-        while (iterator != null && iterator.hasNext()) {
-            SelectionKey key = iterator.next();
-
-            try {
-                if ("read".equals(type)) {
-                    this.handleConnection(key);
-                    this.handleIncomingData(key);
-                }
-
-                if ("write".equals(type)) {
-                    this.handlePendingMessages(key);
-                }
-
-            } catch (IllegalArgumentException e) {
-                Attachment.enqueuePriorityMessage(key, e.getMessage());
-                this.registerInWriteSelector(key);
-
-                this.logError("IllegalArgumentException caught", e);
-
-            } catch (SocketException | IllegalStateException e) {
-                this.removeConnection(key);
-
-                this.logError("Removing connection", e);
-            }
-
-            iterator.remove();
-        }
-    }
-
     private Iterator<SelectionKey> getReadySet(Selector selector) throws IOException {
-        int readyCount = selector.selectNow();
+        int readyCount = selector.select();
 
         if (readyCount > 0) {
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
@@ -197,7 +186,7 @@ public class ChatServer implements Runnable {
     //Register the channel for writing (if already registered - the interest set is reset)
     private void registerInWriteSelector(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
-        channel.register(this.writeSelector, OP_WRITE, key.attachment());
+        channel.register(this.mainSelector, OP_READ | OP_WRITE, key.attachment());
     }
 
     private void handlePendingMessages(SelectionKey key) throws IOException {
@@ -206,7 +195,7 @@ public class ChatServer implements Runnable {
 
             //Unregister if queue is empty
             if (message == null) {
-                key.cancel();
+                key.channel().register(this.mainSelector, OP_READ, key.attachment());
                 return;
             }
 
@@ -224,7 +213,6 @@ public class ChatServer implements Runnable {
 
         try {
             this.mainSelector.close();
-            this.writeSelector.close();
             this.server.close();
 
         } catch (IOException e) {
@@ -244,13 +232,14 @@ public class ChatServer implements Runnable {
 
     private Set<SelectionKey> getAllConnections() {
         return this.mainSelector.keys().stream()
-                .filter(key -> key.isValid() && Attachment.getUsername(key) != null)
+                .filter(key -> key.isValid() && key.attachment() != null)
                 .collect(Collectors.toSet());
     }
 
     private Set<String> getTakenUsernames() {
         return this.getAllConnections().stream()
                 .map(Attachment::getUsername)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
 

@@ -114,10 +114,10 @@ public class ChatUtility {
 
         int bytesRead = channel.read(buffer);
 
-        while (bytesRead > 0) {
+//        while (bytesRead > 0) {
             output.append(decodeBuffer(buffer.flip()));
-            bytesRead = channel.read(buffer.clear());
-        }
+//            bytesRead = channel.read(buffer.clear());
+//        }
 
         //Check if connection was closed
         if (bytesRead == -1) {
@@ -133,10 +133,10 @@ public class ChatUtility {
         int bytesWritten = channel.write(buffer);
         int totalBytes = bytesWritten;
 
-        while (bytesWritten > 0 && buffer.hasRemaining()) {
-            bytesWritten = channel.write(buffer);
-            totalBytes += bytesWritten;
-        }
+//        while (bytesWritten > 0 && buffer.hasRemaining()) {
+//            bytesWritten = channel.write(buffer);
+//            totalBytes += bytesWritten;
+//        }
 
         //Check if connection was closed
         if (totalBytes == -1) {

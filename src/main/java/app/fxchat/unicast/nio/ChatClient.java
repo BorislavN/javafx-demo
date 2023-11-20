@@ -16,7 +16,7 @@ public class ChatClient {
 
     public ChatClient() throws IOException {
         this.channel = SocketChannel.open(new InetSocketAddress(HOST, PORT));
-        this.channel.configureBlocking(false);
+//        this.channel.configureBlocking(false);
         this.username = null;
     }
 
@@ -27,7 +27,7 @@ public class ChatClient {
             this.channel.close();
 
         } catch (IOException e) {
-            this.printException("Channel failed to close", e);
+            printException("Channel failed to close", e);
         }
     }
 
@@ -41,7 +41,7 @@ public class ChatClient {
 
     public String receiveMessage() {
         try {
-          return  ChatUtility.readMessage(this.channel);
+            return ChatUtility.readMessage(this.channel);
         } catch (IOException e) {
             printException("Message READ failed", e);
         }
@@ -69,5 +69,9 @@ public class ChatClient {
         }
 
         return message;
+    }
+
+    public boolean isLive() {
+        return this.channel.isOpen() && this.channel.isConnected();
     }
 }
