@@ -15,13 +15,13 @@ public class SenderTask extends Task<Void> {
     }
 
     @Override
-    protected Void call() {
+    protected Void call() throws IOException {
         if (this.message == null) {
             throw new IllegalArgumentException("Message cannot be null!");
         }
 
         if (!this.isCancelled()) {
-                this.client.sendMessage(this.message);
+            this.client.sendMessage(this.message);
         }
 
         return null;

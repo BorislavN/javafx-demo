@@ -10,7 +10,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class Initializer {
-    public static SceneContext buildScene(Class<? extends Application> appClass, String fxmlName) {
+    public static SceneWrapper buildScene(Class<? extends Application> appClass, String fxmlName) {
         FXMLLoader fxmlLoader = null;
         Scene scene = null;
 
@@ -22,7 +22,7 @@ public class Initializer {
             System.err.println("Scene failed to load - " + e.getMessage());
         }
 
-        return new SceneContext(fxmlLoader, scene);
+        return new SceneWrapper(fxmlLoader, scene);
     }
 
     public static Stage buildStage(String title, Modality modality) {

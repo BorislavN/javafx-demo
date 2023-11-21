@@ -154,7 +154,7 @@ public class ChatServer implements Runnable {
     }
 
     private void handlePublicCommand(SelectionKey origin, String[] data) throws IOException {
-        this.enqueueInAll(data[2], origin);
+        this.enqueueInAll(ChatUtility.newPublicMessage(data[1]), origin);
     }
 
     private void handleQuitCommand(SelectionKey key) throws IOException {

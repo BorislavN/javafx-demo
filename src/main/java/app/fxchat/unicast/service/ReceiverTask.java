@@ -5,6 +5,10 @@ import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
 
+import java.io.IOException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+
 public class ReceiverTask extends Task<Void> {
     private final ChatClient client;
     private final StringProperty latestMessage;
@@ -15,17 +19,24 @@ public class ReceiverTask extends Task<Void> {
     }
 
     @Override
-    protected Void call() {
+    protected Void call() throws IOException {
+        Selector selector = this.client.getSelector();
+
         while (this.client.isLive()) {
             if (this.isCancelled()) {
                 break;
             }
 
-            String message = this.client.receiveMessage();
+            selector.select();
 
-            if (message != null) {
-                System.out.println("Task received message - "+message);
-                Platform.runLater(() -> this.latestMessage.setValue(message));
+            for (SelectionKey key : selector.selectedKeys()) {
+                if (key.isValid() && key.isReadable()) {
+                    String message = this.client.receiveMessage();
+
+                    if (message != null) {
+                        Platform.runLater(() -> this.latestMessage.setValue(message));
+                    }
+                }
             }
         }
 

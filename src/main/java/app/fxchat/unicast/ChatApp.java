@@ -1,23 +1,25 @@
 package app.fxchat.unicast;
 
-import app.fxchat.unicast.fx.ChatController;
+import app.fxchat.unicast.fx.ChatContext;
 import app.fxchat.unicast.fx.Initializer;
-import app.fxchat.unicast.fx.SceneContext;
+import app.fxchat.unicast.fx.JoinController;
+import app.fxchat.unicast.fx.SceneWrapper;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
 public class ChatApp extends Application {
     @Override
-    public void start(Stage stage)   {
-        SceneContext sceneContext = Initializer.buildScene(getClass(), "join-view.fxml");
+    public void start(Stage stage) {
+        SceneWrapper sceneWrapper = Initializer.buildScene(getClass(), "join-view.fxml");
 
-        ChatController controller = sceneContext.getLoader().getController();
+        JoinController controller = sceneWrapper.getLoader().getController();
+        ChatContext context = new ChatContext();
 
         stage.setOnCloseRequest((event -> controller.onClose(event, stage)));
-        controller.configureClient();
+        controller.setContext(context);
 
         stage.setTitle("Chat Client");
-        stage.setScene(sceneContext.getScene());
+        stage.setScene(sceneWrapper.getScene());
         stage.show();
     }
 

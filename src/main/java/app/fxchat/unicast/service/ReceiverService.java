@@ -6,9 +6,6 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
-//TODO: Finish implementation,
-// In the controller I will add a ChangeListener to this property, and when it's updated
-// the message will be saved to a List<String> playing the role of history, and appended in the TextArea
 public class ReceiverService extends Service<Void> {
     private final ChatClient client;
     private final ReadOnlyStringWrapper latestMessage;

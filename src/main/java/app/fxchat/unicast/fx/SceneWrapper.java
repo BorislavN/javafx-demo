@@ -3,11 +3,11 @@ package app.fxchat.unicast.fx;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 
-public class SceneContext {
+public class SceneWrapper {
     private FXMLLoader loader;
     private Scene scene;
 
-    public SceneContext(FXMLLoader loader, Scene scene) {
+    public SceneWrapper(FXMLLoader loader, Scene scene) {
         this.setLoader(loader);
         this.setScene(scene);
     }
@@ -16,7 +16,7 @@ public class SceneContext {
         return this.loader;
     }
 
-    private void setLoader(FXMLLoader loader) throws IllegalArgumentException {
+    private void setLoader(FXMLLoader loader)   {
         if (loader == null) {
             throw new IllegalArgumentException("SceneContext error - loader is null!");
         }
@@ -28,7 +28,7 @@ public class SceneContext {
         return this.scene;
     }
 
-    private void setScene(Scene scene) throws IllegalArgumentException {
+    private void setScene(Scene scene)   {
         if (scene == null) {
             throw new IllegalArgumentException("SceneContext error - scene is null!");
         }
