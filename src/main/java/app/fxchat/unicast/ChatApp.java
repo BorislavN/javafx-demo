@@ -2,28 +2,46 @@ package app.fxchat.unicast;
 
 import app.fxchat.unicast.fx.ChatContext;
 import app.fxchat.unicast.fx.Initializer;
-import app.fxchat.unicast.fx.JoinController;
-import app.fxchat.unicast.fx.SceneWrapper;
+import app.fxchat.unicast.nio.ChatUtility;
 import javafx.application.Application;
+import javafx.concurrent.WorkerStateEvent;
+import javafx.event.EventHandler;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 public class ChatApp extends Application {
     @Override
     public void start(Stage stage) {
-        SceneWrapper sceneWrapper = Initializer.buildScene(getClass(), "join-view.fxml");
-
-        JoinController controller = sceneWrapper.getLoader().getController();
         ChatContext context = new ChatContext();
 
-        stage.setOnCloseRequest((event -> controller.onClose(event, stage)));
-        controller.setContext(context);
+        Scene scene = Initializer.buildJoinScene(context);
+        stage.setOnCloseRequest((event -> this.onClose(event, stage, context)));
 
         stage.setTitle("Chat Client");
-        stage.setScene(sceneWrapper.getScene());
+        stage.setScene(scene);
         stage.show();
     }
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    private void onClose(WindowEvent event, Stage stage, ChatContext context) {
+        event.consume();
+
+        if (context.getUsername() != null) {
+            context.enqueueMessage(ChatUtility.newQuitRequest());
+        }
+
+        context.getSenderService().setOnSucceeded(close(context, stage));
+        context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED, close(context, stage));
+    }
+
+    private EventHandler<WorkerStateEvent> close(ChatContext context, Stage stage) {
+        return (e) -> {
+            context.shutdown();
+            stage.close();
+        };
     }
 }

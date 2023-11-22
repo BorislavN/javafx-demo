@@ -1,5 +1,6 @@
 package app.fxchat.unicast.fx;
 
+import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -24,5 +25,12 @@ public class MessageController {
     }
 
     public void onSend(ActionEvent event) {
+    }
+
+    public ChangeListener<String> getChangeHandler() {
+        return null;
+    }
+
+    public void setContext(ChatContext context) {
     }
 }

@@ -1,17 +1,18 @@
 package app.fxchat.unicast.fx;
 
-import app.fxchat.unicast.ChatApp;
 import app.fxchat.unicast.nio.ChatUtility;
+import app.fxchat.unicast.nio.Constants;
+import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-//TODO: finish implementation
+//TODO: fix improper wrapping of message (wrap before calling the chat utility) and displaying of the received message
 public class MainController {
     @FXML
     private Label announcementMessage;
@@ -23,67 +24,82 @@ public class MainController {
     private TextArea chatArea;
     private ChatContext context;
 
+    public void setContext(ChatContext context) {
+        this.context = context;
+
+        this.setWelcomeMessage();
+
+        this.chatArea.setText(String.join(System.lineSeparator(), this.context.getChatHistory().get("public")));
+    }
+
+    public void onSend(ActionEvent event) {
+        event.consume();
+
+        try {
+            String message = this.messageInput.getText();
+
+            ChatUtility.validateField("Message", message);
+
+            message = this.context.wrapMessage(message);
+
+            this.context.enqueueMessage(ChatUtility.newPublicMessage(message));
+
+            this.setWelcomeMessage();
+            this.messageInput.clear();
+
+        } catch (IllegalArgumentException e) {
+            this.setErrorMessage(e.getMessage());
+        }
+    }
+
     public void onEnter(ActionEvent event) {
         event.consume();
 
         this.sendBtn.fire();
     }
 
-    public void onSend(ActionEvent event) {
-        event.consume();
-
-        String message = ChatUtility.newPublicMessage(this.messageInput.getText());
-
-//        this.queueMessage(message);
-    }
-
     public void onChangeName(ActionEvent event) {
         event.consume();
 
-        SceneWrapper sceneWrapper = Initializer.buildScene(ChatApp.class, "join-view.fxml");
-
+        Scene scene = Initializer.buildJoinScene(this.context);
         Stage stage = Initializer.getStage(this.backBtn);
-        stage.setScene(sceneWrapper.getScene());
+
+        stage.setScene(scene);
     }
 
     public void onShowMessages(ActionEvent event) {
         event.consume();
 
-        Stage stage = Initializer.buildStage("Direct Messages", Modality.NONE);
-        SceneWrapper sceneWrapper = Initializer.buildScene(ChatApp.class, "message-view.fxml");
+        Stage stage = Initializer.buildDMScene(this.context);
 
-        stage.setX(200);
-        stage.setY(200);
-
-        stage.setScene(sceneWrapper.getScene());
         stage.show();
     }
 
-    public void setContext(ChatContext context) {
-        this.context = context;
 
-        this.chatArea.setText(String.join(System.lineSeparator(), this.context.getChatHistory().get("public")));
+    private void setWelcomeMessage() {
+        this.announcementMessage.getStyleClass().remove("errorLabel");
+        this.announcementMessage.setText(String.format("Welcome, %s!", this.context.getUsername()));
     }
 
-    //    this.receiverService.latestMessageProperty().addListener(this.getChangeHandler());
+    private void setErrorMessage(String errorMessage) {
+        this.announcementMessage.getStyleClass().add("errorLabel");
+        this.announcementMessage.setText(errorMessage);
+    }
 
+    public ChangeListener<String> getChangeHandler() {
+        return (observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                System.out.println(newValue);
 
-//    private ChangeListener<String> getChangeHandler() {
-//        return (observable, oldValue, newValue) -> {
-//            if (newValue != null) {
-//                this.chatHistory.add(newValue);
-//                System.out.println(newValue);
-//
-//                if (newValue.startsWith("#joined|" + this.latestUsername)) {
-//                    this.client.setUsername(this.latestUsername);
-//                    this.showMainView();
-//                    this.initializeChatArea();
-//                }
-//
-//                if (this.chatArea != null) {
-//                    this.chatArea.appendText(newValue);
-//                }
-//            }
-//        };
-//    }
+                if (newValue.startsWith(Constants.PUBLIC_MESSAGE_COMMAND)) {
+                    String value = this.context.extractUserMessage(newValue);
+
+                    this.context.addToHistory("public", value);
+                    this.chatArea.appendText(value);
+                }
+
+                //TODO: append to direct, signal that there are direct messages, use CSS animation on "direct" button???
+            }
+        };
+    }
 }

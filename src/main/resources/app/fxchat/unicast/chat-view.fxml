@@ -7,7 +7,7 @@
       xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.fxchat.unicast.fx.MainController">
 
     <Label fx:id="announcementMessage" alignment="CENTER" contentDisplay="CENTER" graphicTextGap="8.0" layoutX="144.0"
-           layoutY="136.0" maxWidth="1.7976931348623157E308" text="Welcome, Jack!" textAlignment="CENTER"
+           layoutY="136.0" maxWidth="1.7976931348623157E308" textAlignment="CENTER"
            textFill="#fffdfd" VBox.vgrow="ALWAYS">
         <padding>
             <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>

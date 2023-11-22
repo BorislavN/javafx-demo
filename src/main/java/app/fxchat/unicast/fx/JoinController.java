@@ -1,17 +1,15 @@
 package app.fxchat.unicast.fx;
 
-import app.fxchat.unicast.ChatApp;
 import app.fxchat.unicast.nio.ChatUtility;
 import app.fxchat.unicast.nio.Constants;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 
 public class JoinController {
     @FXML
@@ -25,24 +23,40 @@ public class JoinController {
 
     public void setContext(ChatContext context) {
         this.context = context;
+
+        if (this.context.getClient() == null || this.context.getReceiverService() == null || this.context.getSenderService() == null) {
+            this.joinPageError.setText("Client failed to initialize!");
+            this.joinPageError.setVisible(true);
+            this.joinBtn.setDisable(true);
+        }
+
+        if (!this.context.getReceiverService().isRunning()) {
+            this.context.getReceiverService().start();
+        }
     }
 
     public void onJoin(ActionEvent event) {
         event.consume();
 
-        this.joinBtn.setDisable(true);
+        try {
+            this.joinBtn.setDisable(true);
 
-        String username = this.usernameInput.getText();
-        this.chosenUsername = username;
+            String username = this.usernameInput.getText();
 
-        String message = ChatUtility.newJoinRequest(username);
+            ChatUtility.validateField("Username", username);
 
-        if (!this.context.getReceiverService().isRunning()) {
-            this.context.getReceiverService().start();
-            this.context.getReceiverService().latestMessageProperty().addListener(this.getChangeHandler());
+            this.chosenUsername = username;
+
+            String message = ChatUtility.newJoinRequest(username);
+
+            this.context.enqueueMessage(message);
+
+        } catch (IllegalArgumentException e) {
+            this.joinPageError.setText(e.getMessage());
+            this.joinPageError.setVisible(true);
+
+            this.joinBtn.setDisable(false);
         }
-
-        this.context.enqueueMessage(message, false);
     }
 
     public void onEnter(ActionEvent event) {
@@ -51,57 +65,37 @@ public class JoinController {
         this.joinBtn.fire();
     }
 
-    public void onClose(WindowEvent event, Stage stage) {
-        event.consume();
-
-        this.context.enqueueMessage(ChatUtility.newQuitRequest(), false);
-
-        this.context.getReceiverService().cancel();
-        this.context.getReceiverService().latestMessageProperty().removeListener(this.getChangeHandler());
-
-        this.context.shutdown();
-
-        stage.close();
-    }
-
     public void showSettings(ActionEvent event) {
         event.consume();
 
-        Stage stage = Initializer.buildStage("Settings", Modality.APPLICATION_MODAL);
-        SceneWrapper sceneWrapper = Initializer.buildScene(ChatApp.class, "settings-view.fxml");
+        Stage stage = Initializer.buildSettingsStage();
 
-        stage.setX(600);
-        stage.setY(250);
-
-        stage.setScene(sceneWrapper.getScene());
         stage.showAndWait();
     }
 
     private void showMainView() {
-        SceneWrapper sceneWrapper = Initializer.buildScene(ChatApp.class, "chat-view.fxml");
-        MainController controller = sceneWrapper.getLoader().getController();
-        controller.setContext(this.context);
-
+        Scene scene = Initializer.buildMainScene(this.context);
         Stage stage = Initializer.getStage(this.joinBtn);
-        stage.setScene(sceneWrapper.getScene());
+
+        stage.setScene(scene);
     }
 
-    private ChangeListener<String> getChangeHandler() {
+    public ChangeListener<String> getChangeHandler() {
         return (observable, oldValue, newValue) -> {
             if (newValue != null) {
                 System.out.println(newValue);
 
+                String value = this.context.extractUserMessage(newValue);
+
                 if (newValue.startsWith(String.format("%s|%s", Constants.JOINED_FLAG, this.chosenUsername))) {
                     this.context.setUsername(this.chosenUsername);
-
-                    this.context.getReceiverService().cancel();
-                    this.context.getReceiverService().latestMessageProperty().removeListener(this.getChangeHandler());
+                    this.context.addToHistory("public", value);
 
                     this.showMainView();
                 }
 
                 if (newValue.startsWith(Constants.USERNAME_EXCEPTION_FLAG)) {
-                    this.joinPageError.setText(newValue.split("\\|")[1]);
+                    this.joinPageError.setText(value);
                     this.joinPageError.setVisible(true);
                 }
             }
