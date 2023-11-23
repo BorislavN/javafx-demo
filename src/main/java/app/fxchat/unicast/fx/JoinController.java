@@ -49,7 +49,7 @@ public class JoinController {
 
             String username = this.usernameInput.getText();
 
-            if (username.equals(this.chosenUsername)) {
+            if (username.equals(this.context.getUsername())) {
                 this.showMainView();
 
                 return;
@@ -80,7 +80,7 @@ public class JoinController {
 
         this.joinBtn.setDisable(true);
 
-        this.context = Initializer.buildSettingsStage(this.context);
+        this.setContext(Initializer.buildSettingsStage(this.context));
 
         if (this.context.isInitialized()) {
             this.joinBtn.setDisable(false);

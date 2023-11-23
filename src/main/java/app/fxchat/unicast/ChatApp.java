@@ -10,9 +10,11 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+import java.io.IOException;
+
 public class ChatApp extends Application {
     @Override
-    public void start(Stage stage) {
+    public void start(Stage stage) throws IOException {
         ChatContext context = new ChatContext();
 
         Scene scene = Initializer.buildJoinScene(context);
@@ -36,8 +38,8 @@ public class ChatApp extends Application {
             context.getSenderService().setOnSucceeded(close(context, stage));
             context.getSenderService().setOnFailed(close(context, stage));
 
-            context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED, close(context, stage));
-            context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_FAILED, close(context, stage));
+            context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED, this.close(context, stage));
+            context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_FAILED, this.close(context, stage));
         }
     }
 

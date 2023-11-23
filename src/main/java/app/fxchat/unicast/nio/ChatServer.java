@@ -13,8 +13,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static app.fxchat.unicast.nio.Constants.HOST;
-import static app.fxchat.unicast.nio.Constants.PORT;
 import static java.nio.channels.SelectionKey.*;
 
 public class ChatServer implements Runnable {
@@ -30,10 +28,12 @@ public class ChatServer implements Runnable {
 
         this.server.configureBlocking(false);
         this.server.register(mainSelector, OP_ACCEPT);
+
+        this.log(String.format("Started on: %s",this.server.getLocalAddress()));
     }
 
     public ChatServer() throws IOException {
-        this(HOST, PORT);
+        this(Constants.HOST, Constants.PORT);
     }
 
     @Override

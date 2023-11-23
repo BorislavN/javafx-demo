@@ -12,48 +12,43 @@ import java.io.IOException;
 import java.util.*;
 
 public class ChatContext {
-    private ChatClient client;
-    private ReceiverService receiverService;
-    private SenderService senderService;
+    private final ChatClient client;
+    private final ReceiverService receiverService;
+    private final SenderService senderService;
     private String username;
-    private Queue<String> typedMessages;
-    private Map<String, List<String>> chatHistory;
+    private final Queue<String> typedMessages;
+    private final Map<String, List<String>> chatHistory;
     private ChangeListener<String> messageListener;
 
-    public ChatContext() {
+    public ChatContext() throws IOException {
         this(Constants.HOST, Constants.PORT);
     }
 
-    public ChatContext(String address, int port) {
-        try {
-            this.username = null;
-            this.typedMessages = new ArrayDeque<>();
-            this.chatHistory = new HashMap<>();
+    public ChatContext(String address, int port) throws IOException {
+        this.username = null;
+        this.typedMessages = new ArrayDeque<>();
+        this.chatHistory = new HashMap<>();
 
 
-            this.client = new ChatClient(address, port);
-            this.senderService = new SenderService(this.client);
-            this.receiverService = new ReceiverService(this.client);
+        this.client = new ChatClient(address, port);
+        this.senderService = new SenderService(this.client);
+        this.receiverService = new ReceiverService(this.client);
 
-            this.senderService.setOnSucceeded((event -> {
-                String newMessage = this.typedMessages.poll();
+        this.senderService.setOnSucceeded((event -> {
+            String newMessage = this.typedMessages.poll();
 
-                if (newMessage != null) {
-                    this.senderService.reset();
-                    this.senderService.setCurrentMessage(newMessage);
-                    this.senderService.restart();
-                }
-            }));
+            if (newMessage != null) {
+                this.senderService.reset();
+                this.senderService.setCurrentMessage(newMessage);
+                this.senderService.restart();
+            }
+        }));
 
-            this.senderService.setOnFailed((event -> {
-                System.err.printf("SenderTask failed for message - \"%s\"%n", this.senderService.getCurrentMessage());
-            }));
+        this.senderService.setOnFailed((event -> {
+            System.err.printf("SenderTask failed for message - \"%s\"%n", this.senderService.getCurrentMessage());
+        }));
 
-            this.receiverService.start();
-
-        } catch (IOException e) {
-            ChatUtility.logException("ChatContext failed initialization", e);
-        }
+        this.receiverService.start();
     }
 
     public ReceiverService getReceiverService() {
