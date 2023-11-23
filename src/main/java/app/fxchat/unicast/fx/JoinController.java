@@ -11,6 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
+//TODO: introduce better exceptuion handling - when the server is closed we can disable the buttons, show an error popup...
 public class JoinController {
     @FXML
     private Label joinPageError;
@@ -28,10 +29,19 @@ public class JoinController {
             this.joinPageError.setText("Client failed to initialize!");
             this.joinPageError.setVisible(true);
             this.joinBtn.setDisable(true);
+
+            return;
         }
 
         if (!this.context.getReceiverService().isRunning()) {
             this.context.getReceiverService().start();
+        }
+
+        this.context.setMessageListener(this.getChangeHandler());
+
+        if (this.context.getUsername() != null) {
+            this.chosenUsername = this.context.getUsername();
+            this.usernameInput.setText(this.chosenUsername);
         }
     }
 
@@ -43,12 +53,16 @@ public class JoinController {
 
             String username = this.usernameInput.getText();
 
-            ChatUtility.validateField("Username", username);
+            if (username.equals(this.chosenUsername)) {
+                this.showMainView();
 
+                return;
+            }
+
+            ChatUtility.validateField("Username", username);
             this.chosenUsername = username;
 
             String message = ChatUtility.newJoinRequest(username);
-
             this.context.enqueueMessage(message);
 
         } catch (IllegalArgumentException e) {
@@ -69,14 +83,12 @@ public class JoinController {
         event.consume();
 
         Stage stage = Initializer.buildSettingsStage();
-
         stage.showAndWait();
     }
 
     private void showMainView() {
         Scene scene = Initializer.buildMainScene(this.context);
         Stage stage = Initializer.getStage(this.joinBtn);
-
         stage.setScene(scene);
     }
 
@@ -86,9 +98,18 @@ public class JoinController {
                 System.out.println(newValue);
 
                 String value = this.context.extractUserMessage(newValue);
+                String joinPartial = String.format("%s|%s", Constants.JOINED_FLAG, this.chosenUsername);
+                String changedPartial = String.format("%s|%s", Constants.CHANGED_FLAG, this.context.getUsername());
 
-                if (newValue.startsWith(String.format("%s|%s", Constants.JOINED_FLAG, this.chosenUsername))) {
-                    this.context.setUsername(this.chosenUsername);
+                if (newValue.startsWith(joinPartial) || newValue.startsWith(changedPartial)) {
+                    String[] data = this.context.extractMessageData(newValue, "\\|");
+
+                    if (this.chosenUsername.equals(data[1])) {
+                        this.context.setUsername(this.chosenUsername);
+                    } else {
+                        this.context.setUsername(this.context.extractMessageData(data[1], ";")[1]);
+                    }
+
                     this.context.addToHistory("public", value);
 
                     this.showMainView();

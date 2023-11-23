@@ -1,7 +1,6 @@
 package app.fxchat.unicast.fx;
 
 import app.fxchat.unicast.nio.ChatUtility;
-import app.fxchat.unicast.nio.Constants;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,7 +11,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
-//TODO: fix improper wrapping of message (wrap before calling the chat utility) and displaying of the received message
+//TODO: introduce better exceptuion handling - when the server is closed we can disable the buttons, show an error popup...
 public class MainController {
     @FXML
     private Label announcementMessage;
@@ -26,6 +25,7 @@ public class MainController {
 
     public void setContext(ChatContext context) {
         this.context = context;
+        this.context.setMessageListener(this.getChangeHandler());
 
         this.setWelcomeMessage();
 
@@ -40,12 +40,15 @@ public class MainController {
 
             ChatUtility.validateField("Message", message);
 
-            message = this.context.wrapMessage(message);
-
-            this.context.enqueueMessage(ChatUtility.newPublicMessage(message));
-
             this.setWelcomeMessage();
             this.messageInput.clear();
+
+            message = this.context.wrapMessage(message);
+
+            this.appendToTextArea(message);
+
+            this.context.addToHistory("public", message);
+            this.context.enqueueMessage(ChatUtility.newPublicMessage(message));
 
         } catch (IllegalArgumentException e) {
             this.setErrorMessage(e.getMessage());
@@ -63,7 +66,6 @@ public class MainController {
 
         Scene scene = Initializer.buildJoinScene(this.context);
         Stage stage = Initializer.getStage(this.backBtn);
-
         stage.setScene(scene);
     }
 
@@ -71,18 +73,17 @@ public class MainController {
         event.consume();
 
         Stage stage = Initializer.buildDMScene(this.context);
-
         stage.show();
     }
 
 
     private void setWelcomeMessage() {
-        this.announcementMessage.getStyleClass().remove("errorLabel");
+        this.announcementMessage.setStyle("");
         this.announcementMessage.setText(String.format("Welcome, %s!", this.context.getUsername()));
     }
 
     private void setErrorMessage(String errorMessage) {
-        this.announcementMessage.getStyleClass().add("errorLabel");
+        this.announcementMessage.setStyle("-fx-background-color: #eb4d42");
         this.announcementMessage.setText(errorMessage);
     }
 
@@ -91,15 +92,20 @@ public class MainController {
             if (newValue != null) {
                 System.out.println(newValue);
 
-                if (newValue.startsWith(Constants.PUBLIC_MESSAGE_COMMAND)) {
-                    String value = this.context.extractUserMessage(newValue);
+                String value = this.context.extractUserMessage(newValue);
 
-                    this.context.addToHistory("public", value);
-                    this.chatArea.appendText(value);
-                }
+                this.appendToTextArea(value);
+                this.context.addToHistory("public", value);
 
                 //TODO: append to direct, signal that there are direct messages, use CSS animation on "direct" button???
+                //TODO: the direct fumcunality will prove harder than expected
+                //TODO: need to find a solution in which two ChangeHandlers are set at the same time to allow for group and private messages simultaneously
             }
         };
+    }
+
+    private void appendToTextArea(String message) {
+        this.chatArea.appendText(System.lineSeparator());
+        this.chatArea.appendText(message);
     }
 }

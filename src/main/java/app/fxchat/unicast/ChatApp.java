@@ -28,14 +28,17 @@ public class ChatApp extends Application {
     }
 
     private void onClose(WindowEvent event, Stage stage, ChatContext context) {
-        event.consume();
-
         if (context.getUsername() != null) {
-            context.enqueueMessage(ChatUtility.newQuitRequest());
-        }
+            event.consume();
 
-        context.getSenderService().setOnSucceeded(close(context, stage));
-        context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED, close(context, stage));
+            context.enqueueMessage(ChatUtility.newQuitRequest());
+
+            context.getSenderService().setOnSucceeded(close(context, stage));
+            context.getSenderService().setOnFailed(close(context, stage));
+
+            context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED, close(context, stage));
+            context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_FAILED, close(context, stage));
+        }
     }
 
     private EventHandler<WorkerStateEvent> close(ChatContext context, Stage stage) {

@@ -14,7 +14,6 @@ public class Initializer {
         SceneWrapper sceneWrapper = Initializer.buildScene("join-view.fxml");
 
         JoinController controller = sceneWrapper.getLoader().getController();
-        context.setMessageListener(controller.getChangeHandler());
         controller.setContext(context);
 
         return sceneWrapper.getScene();
@@ -24,7 +23,6 @@ public class Initializer {
         SceneWrapper sceneWrapper = Initializer.buildScene("chat-view.fxml");
 
         MainController controller = sceneWrapper.getLoader().getController();
-        context.setMessageListener(controller.getChangeHandler());
         controller.setContext(context);
 
         return sceneWrapper.getScene();
@@ -47,7 +45,6 @@ public class Initializer {
         SceneWrapper sceneWrapper = Initializer.buildScene("message-view.fxml");
 
         MessageController controller = sceneWrapper.getLoader().getController();
-        context.setMessageListener(controller.getChangeHandler());
         controller.setContext(context);
 
         stage.setX(200);

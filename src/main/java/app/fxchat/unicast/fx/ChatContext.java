@@ -110,12 +110,12 @@ public class ChatContext {
         return String.format("%s: %s", username, message);
     }
 
-    public String[] extractMessageData(String message) {
-        return message.split("\\|");
+    public String[] extractMessageData(String message, String delimiter) {
+        return message.split(delimiter);
     }
 
     public String extractUserMessage(String message) {
-        String[] data = this.extractMessageData(message);
+        String[] data = this.extractMessageData(message,"\\|");
 
         return data[data.length - 1];
     }
