@@ -25,7 +25,7 @@ public class JoinController {
     public void setContext(ChatContext context) {
         this.context = context;
 
-        if (this.context.getClient() == null || this.context.getReceiverService() == null || this.context.getSenderService() == null) {
+        if (!this.context.isInitialized()) {
             this.joinPageError.setText("Client failed to initialize!");
             this.joinPageError.setVisible(true);
             this.joinBtn.setDisable(true);
@@ -33,16 +33,12 @@ public class JoinController {
             return;
         }
 
-        if (!this.context.getReceiverService().isRunning()) {
-            this.context.getReceiverService().start();
-        }
-
-        this.context.setMessageListener(this.getChangeHandler());
-
         if (this.context.getUsername() != null) {
             this.chosenUsername = this.context.getUsername();
             this.usernameInput.setText(this.chosenUsername);
         }
+
+        this.context.setMessageListener(this.getChangeHandler());
     }
 
     public void onJoin(ActionEvent event) {
@@ -82,8 +78,13 @@ public class JoinController {
     public void showSettings(ActionEvent event) {
         event.consume();
 
-        Stage stage = Initializer.buildSettingsStage();
-        stage.showAndWait();
+        this.joinBtn.setDisable(true);
+
+        this.context = Initializer.buildSettingsStage(this.context);
+
+        if (this.context.isInitialized()) {
+            this.joinBtn.setDisable(false);
+        }
     }
 
     private void showMainView() {

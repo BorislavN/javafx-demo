@@ -28,16 +28,20 @@ public class Initializer {
         return sceneWrapper.getScene();
     }
 
-    public static Stage buildSettingsStage() {
+    public static ChatContext buildSettingsStage(ChatContext context) {
         Stage stage = Initializer.buildStage("Settings", Modality.APPLICATION_MODAL);
         SceneWrapper sceneWrapper = Initializer.buildScene("settings-view.fxml");
+
+        SettingsController controller = sceneWrapper.getLoader().getController();
+        controller.setContext(context);
 
         stage.setX(600);
         stage.setY(250);
 
         stage.setScene(sceneWrapper.getScene());
+        stage.showAndWait();
 
-        return stage;
+        return controller.getContext();
     }
 
     public static Stage buildDMScene(ChatContext context) {

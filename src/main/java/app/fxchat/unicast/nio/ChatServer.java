@@ -22,14 +22,18 @@ public class ChatServer implements Runnable {
     private final Selector mainSelector;
     private boolean receivedAConnection;
 
-    public ChatServer() throws IOException {
+    public ChatServer(String host, int port) throws IOException {
         this.server = ServerSocketChannel.open();
-        this.server.bind(new InetSocketAddress(HOST, PORT));
+        this.server.bind(new InetSocketAddress(host, port));
         this.mainSelector = Selector.open();
         this.receivedAConnection = false;
 
         this.server.configureBlocking(false);
         this.server.register(mainSelector, OP_ACCEPT);
+    }
+
+    public ChatServer() throws IOException {
+        this(HOST, PORT);
     }
 
     @Override
@@ -244,6 +248,12 @@ public class ChatServer implements Runnable {
     }
 
     private void log(String message) {
+        if (message.isBlank()) {
+            this.logError("Empty String", new Throwable("Connection terminated unexpectedly!"));
+
+            return;
+        }
+
         System.out.printf("[%1$tH:%1$tM] Server log - \"%2$s\"%n", LocalTime.now(), message);
     }
 

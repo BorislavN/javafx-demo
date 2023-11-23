@@ -25,11 +25,12 @@ public class MainController {
 
     public void setContext(ChatContext context) {
         this.context = context;
-        this.context.setMessageListener(this.getChangeHandler());
 
         this.setWelcomeMessage();
 
         this.chatArea.setText(String.join(System.lineSeparator(), this.context.getChatHistory().get("public")));
+
+        this.context.setMessageListener(this.getChangeHandler());
     }
 
     public void onSend(ActionEvent event) {

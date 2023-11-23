@@ -2,6 +2,7 @@ package app.fxchat.unicast.fx;
 
 import app.fxchat.unicast.nio.ChatClient;
 import app.fxchat.unicast.nio.ChatUtility;
+import app.fxchat.unicast.nio.Constants;
 import app.fxchat.unicast.service.ReceiverService;
 import app.fxchat.unicast.service.SenderService;
 import javafx.beans.value.ChangeListener;
@@ -20,12 +21,17 @@ public class ChatContext {
     private ChangeListener<String> messageListener;
 
     public ChatContext() {
+        this(Constants.HOST, Constants.PORT);
+    }
+
+    public ChatContext(String address, int port) {
         try {
             this.username = null;
             this.typedMessages = new ArrayDeque<>();
             this.chatHistory = new HashMap<>();
 
-            this.client = new ChatClient();
+
+            this.client = new ChatClient(address, port);
             this.senderService = new SenderService(this.client);
             this.receiverService = new ReceiverService(this.client);
 
@@ -42,6 +48,8 @@ public class ChatContext {
             this.senderService.setOnFailed((event -> {
                 System.err.printf("SenderTask failed for message - \"%s\"%n", this.senderService.getCurrentMessage());
             }));
+
+            this.receiverService.start();
 
         } catch (IOException e) {
             ChatUtility.logException("ChatContext failed initialization", e);
@@ -115,9 +123,13 @@ public class ChatContext {
     }
 
     public String extractUserMessage(String message) {
-        String[] data = this.extractMessageData(message,"\\|");
+        String[] data = this.extractMessageData(message, "\\|");
 
         return data[data.length - 1];
+    }
+
+    public boolean isInitialized() {
+        return this.client != null && this.senderService != null && this.receiverService != null;
     }
 
     public void shutdown() {

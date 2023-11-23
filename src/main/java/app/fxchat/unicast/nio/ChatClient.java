@@ -7,15 +7,18 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
-import static app.fxchat.unicast.nio.Constants.HOST;
-import static app.fxchat.unicast.nio.Constants.PORT;
-
 public class ChatClient {
     private final SocketChannel channel;
     private final Selector selector;
+    private final String address;
+    private final int port;
 
-    public ChatClient() throws IOException {
-        this.channel = SocketChannel.open(new InetSocketAddress(HOST, PORT));
+
+    public ChatClient(String address, int port) throws IOException {
+        this.address = address;
+        this.port = port;
+
+        this.channel = SocketChannel.open(new InetSocketAddress(this.address, this.port));
         this.channel.configureBlocking(false);
 
         this.selector = Selector.open();
@@ -33,6 +36,14 @@ public class ChatClient {
         } catch (IOException e) {
             ChatUtility.logException("Channel failed to close", e);
         }
+    }
+
+    public String getAddress() {
+        return this.address;
+    }
+
+    public int getPort() {
+        return this.port;
     }
 
     public Selector getSelector() {
