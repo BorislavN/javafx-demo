@@ -15,7 +15,7 @@
     </Label>
 
     <HBox prefHeight="100.0" prefWidth="200.0" spacing="5.0">
-        <Button maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false"
+        <Button fx:id="dmButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false"
                 onAction="#onShowMessages" text="Direct Messages" HBox.hgrow="SOMETIMES"/>
         <Button fx:id="backBtn" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
                 mnemonicParsing="false" onAction="#onChangeName" text="  Change name  " HBox.hgrow="SOMETIMES"/>

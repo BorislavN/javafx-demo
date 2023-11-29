@@ -28,9 +28,6 @@ public class ChatClient {
     public void shutdown() {
         try {
             this.selector.close();
-
-            this.channel.shutdownInput();
-            this.channel.shutdownOutput();
             this.channel.close();
 
         } catch (IOException e) {

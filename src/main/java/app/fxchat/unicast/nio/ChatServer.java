@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import static java.nio.channels.SelectionKey.*;
 
+//TODO: check why direct messages (#to) are not sent
 public class ChatServer implements Runnable {
     private final ServerSocketChannel server;
     private final Selector mainSelector;

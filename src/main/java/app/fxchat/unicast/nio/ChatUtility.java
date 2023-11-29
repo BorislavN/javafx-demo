@@ -74,7 +74,7 @@ public class ChatUtility {
     }
 
     public static String newMembersResponse(Set<String> usernames) {
-        return generateMessage(MEMBERS_COMMAND, java.lang.String.join(ARRAY_DELIMITER, usernames));
+        return generateMessage(MEMBERS_COMMAND, String.join(ARRAY_DELIMITER, usernames));
     }
 
     public static String newPublicMessage(String message) {

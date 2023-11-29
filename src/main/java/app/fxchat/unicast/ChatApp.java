@@ -45,6 +45,8 @@ public class ChatApp extends Application {
 
     private EventHandler<WorkerStateEvent> close(ChatContext context, Stage stage) {
         return (e) -> {
+            e.consume();
+
             context.shutdown();
             stage.close();
         };

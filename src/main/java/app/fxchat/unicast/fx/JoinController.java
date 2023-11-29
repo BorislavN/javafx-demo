@@ -11,7 +11,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
-//TODO: introduce better exceptuion handling - when the server is closed we can disable the buttons, show an error popup...
+//TODO: introduce better exceptuion handling - check if the client is connected,
+// when the server is closed we can disable the buttons, show an error popup...
+// when the SenderTask fails show error (see if we can get exception message from the task)
 public class JoinController {
     @FXML
     private Label joinPageError;
@@ -24,14 +26,6 @@ public class JoinController {
 
     public void setContext(ChatContext context) {
         this.context = context;
-
-        if (!this.context.isInitialized()) {
-            this.joinPageError.setText("Client failed to initialize!");
-            this.joinPageError.setVisible(true);
-            this.joinBtn.setDisable(true);
-
-            return;
-        }
 
         if (this.context.getUsername() != null) {
             this.chosenUsername = this.context.getUsername();

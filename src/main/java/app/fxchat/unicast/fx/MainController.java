@@ -11,14 +11,17 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
-//TODO: introduce better exceptuion handling - when the server is closed we can disable the buttons, show an error popup...
+//TODO: introduce better exceptuion handling - check if the client is connected,
+// when the server is closed we can disable the buttons, show an error popup...
+// when the SenderTask fails show error (see if we can get exception message from the task)
+// add onClose handler, to activate the "DMButton" when the DM stage is closed
 public class MainController {
     @FXML
     private Label announcementMessage;
     @FXML
     private TextField messageInput;
     @FXML
-    private Button backBtn, sendBtn;
+    private Button backBtn, dmButton, sendBtn;
     @FXML
     private TextArea chatArea;
     private ChatContext context;
@@ -41,15 +44,15 @@ public class MainController {
 
             ChatUtility.validateField("Message", message);
 
-            this.setWelcomeMessage();
-            this.messageInput.clear();
-
             message = this.context.wrapMessage(message);
-
-            this.appendToTextArea(message);
 
             this.context.addToHistory("public", message);
             this.context.enqueueMessage(ChatUtility.newPublicMessage(message));
+
+            this.appendToTextArea(message);
+
+            this.setWelcomeMessage();
+            this.messageInput.clear();
 
         } catch (IllegalArgumentException e) {
             this.setErrorMessage(e.getMessage());
@@ -73,8 +76,9 @@ public class MainController {
     public void onShowMessages(ActionEvent event) {
         event.consume();
 
-        Stage stage = Initializer.buildDMScene(this.context);
-        stage.show();
+        this.dmButton.setDisable(true);
+
+        Initializer.showDMStage(Initializer.getStage(this.dmButton),this.context);
     }
 
 
@@ -91,7 +95,8 @@ public class MainController {
     public ChangeListener<String> getChangeHandler() {
         return (observable, oldValue, newValue) -> {
             if (newValue != null) {
-                System.out.println(newValue);
+//                System.out.println(newValue);
+                System.out.println("From MainController");
 
                 String value = this.context.extractUserMessage(newValue);
 
