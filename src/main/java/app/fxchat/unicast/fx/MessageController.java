@@ -11,11 +11,14 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 //TODO: Fix the many errors, add a singular event handler, not for each contact
+//TODO: Fix CSS, add CSS stying when messages are pending on an contact
+//TODO: Rework all the listeners/handlers, when using a property like "onCloseRequest" the EventHandlers are overwritten
+// when adding and removing listeners, we need to create an instance of the listener beforehand, and pass the same
+// instance to both the add and remove method
 public class MessageController {
     @FXML
     private VBox contacts;
@@ -50,8 +53,7 @@ public class MessageController {
             this.context.addToHistory(this.currentDestination, text);
             this.context.enqueueMessage(ChatUtility.newDirectMessageRequest(this.currentDestination, text));
 
-            this.chatArea.appendText(System.lineSeparator());
-            this.chatArea.appendText(text);
+            this.appendToChatArea(text);
 
             this.setDestinationLabel();
             this.messageInput.clear();
@@ -63,53 +65,22 @@ public class MessageController {
 
     public ChangeListener<String> getChangeHandler() {
         return (observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                if (newValue.startsWith(Constants.MEMBERS_COMMAND)) {
-                    String names = this.context.extractUserMessage(newValue);
-                    String[] users = this.context.extractMessageData(names, ";");
+            if (newValue != null && !newValue.isBlank()) {
+                System.out.println(newValue);
 
-                    if (users.length == 1) {
-                        this.setErrorMessage("Currently you are the only user!");
-                        this.sendBtn.setDisable(true);
-                        this.stage.show();
-
-                        return;
-                    }
-
-                    for (String user : users) {
-                        if (!user.equals(this.context.getUsername())) {
-                            Button button = this.createNewContact(user);
-
-                            this.contacts.getChildren().add(button);
-                        }
-                    }
-
-                    this.selectFirstContact();
-                    this.stage.show();
+                if (this.handleMembersFlag(newValue)) {
+                    return;
                 }
 
-                if (newValue.startsWith(Constants.LEFT_FLAG)) {
-                    String[] data = this.context.extractMessageData(newValue, "\\|");
-                    ObservableList<Node> onlineUsers = this.contacts.getChildren();
-
-                    String user = data[1];
-
-                    onlineUsers.removeIf(node -> user.equals(node.getId()));
+                if (this.handleJoinFlag(newValue)) {
+                    return;
                 }
 
-                if (newValue.startsWith(Constants.JOINED_FLAG)) {
-                    String[] data = this.context.extractMessageData(newValue, "\\|");
-
-                    Button button = this.createNewContact(data[1]);
-
-                    this.contacts.getChildren().add(button);
+                if (this.handleLeftFlag(newValue)) {
+                    return;
                 }
 
-                if (newValue.startsWith(Constants.FROM_FLAG)) {
-                    String[] data = this.context.extractMessageData(newValue, "\\|");
-
-                    this.context.addToHistory(data[1], data[2]);
-                }
+                this.handleFromFlag(newValue);
             }
         };
     }
@@ -123,12 +94,93 @@ public class MessageController {
 
         //Remove listener before close
         this.stage.setOnCloseRequest((e) -> {
+            System.out.println("removing");
             this.context.getReceiverService().latestMessageProperty().removeListener(this.getChangeHandler());
+
+            System.out.println();
         });
 
         //Request online users
         this.context.enqueueMessage(ChatUtility.newMembersRequest());
     }
+
+    private boolean handleMembersFlag(String message) {
+        if (message.startsWith(Constants.MEMBERS_COMMAND)) {
+            String names = this.context.extractUserMessage(message);
+            String[] users = this.context.extractMessageData(names, ";");
+
+            for (String user : users) {
+                if (!user.equals(this.context.getUsername())) {
+                    Button button = this.createNewContact(user);
+                    this.contacts.getChildren().add(button);
+                }
+            }
+
+            this.selectFirstContact();
+            this.stage.show();
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean handleLeftFlag(String message) {
+        if (message.startsWith(Constants.LEFT_FLAG)) {
+            String[] data = this.context.extractMessageData(message, "\\|");
+            ObservableList<Node> onlineUsers = this.contacts.getChildren();
+
+            String user = data[1];
+
+            boolean result = onlineUsers.removeIf(node -> user.equals(node.getId()));
+
+            if (result && this.currentDestination.equals(user)) {
+                this.selectFirstContact();
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean handleJoinFlag(String message) {
+        if (message.startsWith(Constants.JOINED_FLAG)) {
+            String[] data = this.context.extractMessageData(message, "\\|");
+
+            Button button = this.createNewContact(data[1]);
+
+            this.contacts.getChildren().add(button);
+
+            if (this.currentDestination == null) {
+                this.selectFirstContact();
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean handleFromFlag(String message) {
+        if (message.startsWith(Constants.FROM_FLAG)) {
+            String[] data = this.context.extractMessageData(message, "\\|");
+
+            String sender = data[1];
+            String text = data[2];
+
+            this.context.addToHistory(sender, text);
+
+            if (sender.equals(this.currentDestination)) {
+                this.appendToChatArea(text);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
 
     private void setDestinationLabel() {
         this.receiverLabel.setStyle("");
@@ -144,7 +196,7 @@ public class MessageController {
         Button button = new Button(username);
         button.setId(username);
 
-        VBox.setVgrow(button, Priority.ALWAYS);
+//        VBox.setVgrow(button, Priority.ALWAYS);
 
         button.getStyleClass().add("atButton");
         button.setOnAction((e) -> this.contactAction(e, button));
@@ -165,10 +217,25 @@ public class MessageController {
     }
 
     private void selectFirstContact() {
-        Node firstContact = this.contacts.getChildren().get(0);
+        ObservableList<Node> contacts = this.contacts.getChildren();
+
+        if (contacts.isEmpty()) {
+            this.setErrorMessage("Currently you are the only user!");
+            this.sendBtn.setDisable(true);
+
+            return;
+        }
+
+        Node firstContact = contacts.get(0);
         firstContact.getStyleClass().add("selectedButton");
 
         this.currentDestination = firstContact.getId();
         this.setDestinationLabel();
+        this.sendBtn.setDisable(false);
+    }
+
+    private void appendToChatArea(String text) {
+        this.chatArea.appendText(System.lineSeparator());
+        this.chatArea.appendText(text);
     }
 }

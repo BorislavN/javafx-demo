@@ -15,7 +15,8 @@ import java.util.stream.Collectors;
 
 import static java.nio.channels.SelectionKey.*;
 
-//TODO: check why direct messages (#to) are not sent
+//TODO: Show quit if the connection was closed, and the attachment had an username
+//TODO: see why members command does not appear second time
 public class ChatServer implements Runnable {
     private final ServerSocketChannel server;
     private final Selector mainSelector;

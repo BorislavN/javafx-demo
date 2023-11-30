@@ -25,6 +25,11 @@ public class JoinController {
     private String chosenUsername;
 
     public void setContext(ChatContext context) {
+        if (!ChatContext.isValid(context)) {
+            this.setErrorMessage("Context failed initialization!", true);
+            return;
+        }
+
         this.context = context;
 
         if (this.context.getUsername() != null) {
@@ -56,10 +61,7 @@ public class JoinController {
             this.context.enqueueMessage(message);
 
         } catch (IllegalArgumentException e) {
-            this.joinPageError.setText(e.getMessage());
-            this.joinPageError.setVisible(true);
-
-            this.joinBtn.setDisable(false);
+            this.setErrorMessage(e.getMessage(), false);
         }
     }
 
@@ -76,7 +78,7 @@ public class JoinController {
 
         this.setContext(Initializer.buildSettingsStage(this.context));
 
-        if (this.context.isInitialized()) {
+        if (ChatContext.isValid(this.context)) {
             this.joinBtn.setDisable(false);
         }
     }
@@ -111,10 +113,15 @@ public class JoinController {
                 }
 
                 if (newValue.startsWith(Constants.USERNAME_EXCEPTION_FLAG)) {
-                    this.joinPageError.setText(value);
-                    this.joinPageError.setVisible(true);
+                    this.setErrorMessage(value, false);
                 }
             }
         };
+    }
+
+    private void setErrorMessage(String message, boolean disableJoin) {
+        this.joinPageError.setText(message);
+        this.joinPageError.setVisible(true);
+        this.joinBtn.setDisable(disableJoin);
     }
 }

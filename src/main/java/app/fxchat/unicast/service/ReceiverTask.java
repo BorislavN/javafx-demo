@@ -1,6 +1,7 @@
 package app.fxchat.unicast.service;
 
 import app.fxchat.unicast.nio.ChatClient;
+import app.fxchat.unicast.nio.Constants;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
@@ -34,7 +35,13 @@ public class ReceiverTask extends Task<Void> {
                     String message = this.client.receiveMessage();
 
                     if (message != null) {
-                        Platform.runLater(() -> this.latestMessage.setValue(message));
+                        Platform.runLater(() -> {
+                            if (message.startsWith(Constants.MEMBERS_COMMAND)) {
+                                this.latestMessage.setValue(null);
+                            }
+
+                            this.latestMessage.setValue(message);
+                        });
                     }
                 }
             }

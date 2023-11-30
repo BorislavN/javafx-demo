@@ -44,7 +44,7 @@ public class Initializer {
         return controller.getContext();
     }
 
-    public static void showDMStage(Stage parentStage, ChatContext context) {
+    public static Stage buildDMStage(Stage parentStage, ChatContext context) {
         Stage stage = Initializer.buildStage("Direct Messages", Modality.NONE);
         SceneWrapper sceneWrapper = Initializer.buildScene("message-view.fxml");
 
@@ -56,9 +56,11 @@ public class Initializer {
 
         MessageController controller = sceneWrapper.getLoader().getController();
         controller.setContext(stage, context);
+
+        return stage;
     }
 
-    //Take care to provide a visible (ot null) element
+    //Take care to provide a visible (not null) element
     public static Stage getStage(Node visibleElement) {
         return (Stage) visibleElement.getScene().getWindow();
     }

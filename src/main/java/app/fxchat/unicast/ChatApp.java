@@ -3,6 +3,7 @@ package app.fxchat.unicast;
 import app.fxchat.unicast.fx.ChatContext;
 import app.fxchat.unicast.fx.Initializer;
 import app.fxchat.unicast.nio.ChatUtility;
+import app.fxchat.unicast.nio.Constants;
 import javafx.application.Application;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.EventHandler;
@@ -14,9 +15,16 @@ import java.io.IOException;
 
 public class ChatApp extends Application {
     @Override
-    public void start(Stage stage) throws IOException {
-        ChatContext context = new ChatContext();
+    public void start(Stage stage) {
+        ChatContext temp;
 
+        try {
+            temp = new ChatContext(Constants.HOST, Constants.PORT);
+        } catch (IOException e) {
+            temp = null;
+        }
+
+        ChatContext context = temp;
         Scene scene = Initializer.buildJoinScene(context);
         stage.setOnCloseRequest((event -> this.onClose(event, stage, context)));
 
@@ -30,13 +38,13 @@ public class ChatApp extends Application {
     }
 
     private void onClose(WindowEvent event, Stage stage, ChatContext context) {
-        if (context.getUsername() != null) {
+        if (context != null && context.getUsername() != null) {
             event.consume();
 
             context.enqueueMessage(ChatUtility.newQuitRequest());
 
-            context.getSenderService().setOnSucceeded(close(context, stage));
-            context.getSenderService().setOnFailed(close(context, stage));
+            context.getSenderService().setOnSucceeded(this.close(context, stage));
+            context.getSenderService().setOnFailed(this.close(context, stage));
 
             context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED, this.close(context, stage));
             context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_FAILED, this.close(context, stage));
@@ -47,7 +55,10 @@ public class ChatApp extends Application {
         return (e) -> {
             e.consume();
 
-            context.shutdown();
+            if (context!=null){
+                context.shutdown();
+            }
+
             stage.close();
         };
     }

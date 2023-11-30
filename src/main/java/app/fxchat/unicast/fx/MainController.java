@@ -1,8 +1,10 @@
 package app.fxchat.unicast.fx;
 
 import app.fxchat.unicast.nio.ChatUtility;
+import app.fxchat.unicast.nio.Constants;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -10,11 +12,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 //TODO: introduce better exceptuion handling - check if the client is connected,
 // when the server is closed we can disable the buttons, show an error popup...
 // when the SenderTask fails show error (see if we can get exception message from the task)
-// add onClose handler, to activate the "DMButton" when the DM stage is closed
 public class MainController {
     @FXML
     private Label announcementMessage;
@@ -28,12 +30,10 @@ public class MainController {
 
     public void setContext(ChatContext context) {
         this.context = context;
-
-        this.setWelcomeMessage();
+        this.context.setMessageListener(this.getChangeHandler());
 
         this.chatArea.setText(String.join(System.lineSeparator(), this.context.getChatHistory().get("public")));
-
-        this.context.setMessageListener(this.getChangeHandler());
+        this.setWelcomeMessage();
     }
 
     public void onSend(ActionEvent event) {
@@ -77,8 +77,20 @@ public class MainController {
         event.consume();
 
         this.dmButton.setDisable(true);
+        this.backBtn.setDisable(true);
 
-        Initializer.showDMStage(Initializer.getStage(this.dmButton),this.context);
+        Stage window = Initializer.buildDMStage(Initializer.getStage(this.dmButton), this.context);
+
+        window.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.enableButtons(window));
+    }
+
+    private EventHandler<WindowEvent> enableButtons(Stage stage) {
+        return (e) -> {
+            this.dmButton.setDisable(false);
+            this.backBtn.setDisable(false);
+
+            stage.removeEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.enableButtons(stage));
+        };
     }
 
 
@@ -94,18 +106,14 @@ public class MainController {
 
     public ChangeListener<String> getChangeHandler() {
         return (observable, oldValue, newValue) -> {
-            if (newValue != null) {
-//                System.out.println(newValue);
-                System.out.println("From MainController");
 
-                String value = this.context.extractUserMessage(newValue);
+            if (newValue != null && !newValue.isBlank()) {
+                if (!newValue.startsWith(Constants.MEMBERS_COMMAND) && !newValue.startsWith(Constants.FROM_FLAG)) {
+                    String value = this.context.extractUserMessage(newValue);
 
-                this.appendToTextArea(value);
-                this.context.addToHistory("public", value);
-
-                //TODO: append to direct, signal that there are direct messages, use CSS animation on "direct" button???
-                //TODO: the direct fumcunality will prove harder than expected
-                //TODO: need to find a solution in which two ChangeHandlers are set at the same time to allow for group and private messages simultaneously
+                    this.appendToTextArea(value);
+                    this.context.addToHistory("public", value);
+                }
             }
         };
     }

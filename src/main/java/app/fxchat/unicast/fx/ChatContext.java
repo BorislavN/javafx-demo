@@ -29,7 +29,6 @@ public class ChatContext {
         this.typedMessages = new ArrayDeque<>();
         this.chatHistory = new HashMap<>();
 
-
         this.client = new ChatClient(address, port);
         this.senderService = new SenderService(this.client);
         this.receiverService = new ReceiverService(this.client);
@@ -141,5 +140,9 @@ public class ChatContext {
                 this.receiverService.latestMessageProperty().removeListener(this.messageListener);
             }
         }
+    }
+
+    public static boolean isValid(ChatContext context) {
+        return context != null && context.isInitialized();
     }
 }

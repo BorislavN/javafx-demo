@@ -27,53 +27,58 @@ public class SettingsController {
     public void saveSettings(ActionEvent event) {
         event.consume();
 
-        String newAddress = this.addressInput.getText();
-        int newPort = Integer.parseInt(this.portInput.getText());
+        try {
+            String newAddress = this.addressInput.getText();
+            int newPort = Integer.parseInt(this.portInput.getText());
 
-        String oldAddress = this.context.getClient().getAddress();
-        int oldPort = this.context.getClient().getPort();
+            String oldAddress = ChatContext.isValid(this.context) ? this.context.getClient().getAddress() : "";
+            int oldPort = ChatContext.isValid(this.context) ? this.context.getClient().getPort() : 0;
 
-        Stage stage = Initializer.getStage(this.addressInput);
+            Stage stage = Initializer.getStage(this.addressInput);
 
-        if (newAddress.equals(oldAddress) && newPort == oldPort) {
-            stage.close();
-
-            return;
-        }
-
-        if (!this.portIsValid(newPort)) {
-            this.settingsError.setText("Invalid port!");
-            this.settingsError.setVisible(true);
-
-            return;
-        }
-
-        if (!this.service.isRunning()) {
-            stage.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.preventClose());
-
-            this.service.reset();
-            this.service.setParameters(newAddress, newPort);
-            this.service.start();
-
-            this.service.setOnSucceeded((e) -> {
-                e.consume();
-
-                this.context.shutdown();
-                this.context = this.service.getValue();
-
-                stage.removeEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.preventClose());
-
+            if (newAddress.equals(oldAddress) && newPort == oldPort) {
                 stage.close();
-            });
+                return;
+            }
 
-            this.service.setOnFailed((e) -> {
-                e.consume();
-
-                this.settingsError.setText("Invalid address!");
+            if (!this.portIsValid(newPort)) {
+                this.settingsError.setText("Invalid port!");
                 this.settingsError.setVisible(true);
 
-                stage.removeEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.preventClose());
-            });
+                return;
+            }
+
+            if (!this.service.isRunning()) {
+                stage.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.preventClose());
+
+                this.service.reset();
+                this.service.setParameters(newAddress, newPort);
+                this.service.start();
+
+                this.service.setOnSucceeded((e) -> {
+                    e.consume();
+
+                    this.context.shutdown();
+                    this.context = this.service.getValue();
+
+                    stage.removeEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.preventClose());
+
+                    stage.close();
+                });
+
+                this.service.setOnFailed((e) -> {
+                    e.consume();
+
+                    this.settingsError.setText("Invalid address!");
+                    this.settingsError.setVisible(true);
+
+                    stage.removeEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.preventClose());
+                });
+            }
+
+        } catch (NumberFormatException e) {
+            this.settingsError.setText("Port must be integer!");
+            this.settingsError.setVisible(true);
         }
     }
 
@@ -82,9 +87,11 @@ public class SettingsController {
     }
 
     public void setContext(ChatContext context) {
-        this.context = context;
-        this.addressInput.setText(this.context.getClient().getAddress());
-        this.portInput.setText(String.valueOf(this.context.getClient().getPort()));
+        if (ChatContext.isValid(context)) {
+            this.context = context;
+            this.addressInput.setText(this.context.getClient().getAddress());
+            this.portInput.setText(String.valueOf(this.context.getClient().getPort()));
+        }
     }
 
     private boolean portIsValid(int port) {
