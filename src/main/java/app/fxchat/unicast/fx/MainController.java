@@ -6,7 +6,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -46,7 +45,7 @@ public class MainController {
 
             message = this.context.wrapMessage(message);
 
-            this.context.addToHistory("public", message);
+            this.context.addToHistory(Constants.DEFAULT_KEY, message);
             this.context.enqueueMessage(ChatUtility.newPublicMessage(message));
 
             this.appendToTextArea(message);
@@ -68,9 +67,7 @@ public class MainController {
     public void onChangeName(ActionEvent event) {
         event.consume();
 
-        Scene scene = Initializer.buildJoinScene(this.context);
-        Stage stage = Initializer.getStage(this.backBtn);
-        stage.setScene(scene);
+        Initializer.buildJoinScene(Initializer.getStage(this.backBtn), this.context);
     }
 
     public void onShowMessages(ActionEvent event) {
@@ -81,16 +78,13 @@ public class MainController {
 
         Stage window = Initializer.buildDMStage(Initializer.getStage(this.dmButton), this.context);
 
-        window.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.enableButtons(window));
+        window.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.enableButtons());
     }
 
-    private EventHandler<WindowEvent> enableButtons(Stage stage) {
+    private EventHandler<WindowEvent> enableButtons() {
         return (e) -> {
             this.dmButton.setDisable(false);
             this.backBtn.setDisable(false);
-
-            System.out.println(Thread.currentThread().getName());
-            System.out.println(stage.getTitle());
         };
     }
 
@@ -109,11 +103,22 @@ public class MainController {
         return (observable, oldValue, newValue) -> {
 
             if (newValue != null && !newValue.isBlank()) {
-                if (!newValue.startsWith(Constants.MEMBERS_COMMAND) && !newValue.startsWith(Constants.FROM_FLAG)) {
-                    String value = this.context.extractUserMessage(newValue);
+                if (!newValue.startsWith(Constants.MEMBERS_COMMAND)) {
+                    String[] data = this.context.extractMessageData(newValue, "\\|");
 
-                    this.appendToTextArea(value);
-                    this.context.addToHistory("public", value);
+                    if (newValue.startsWith(Constants.FROM_FLAG)) {
+                        String key = data[1];
+
+                        this.context.addToHistory(key, data[2]);
+                        //TODO: if "DM" button is disabled - add  blinking CSS to signal pending DMs
+
+                        return;
+                    }
+
+                    String message = data[data.length - 1];
+
+                    this.context.addToHistory(Constants.DEFAULT_KEY, message);
+                    this.appendToTextArea(message);
                 }
             }
         };

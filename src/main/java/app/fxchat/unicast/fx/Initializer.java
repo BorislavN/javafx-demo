@@ -10,13 +10,17 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class Initializer {
-    public static Scene buildJoinScene(ChatContext context) {
+    public static void buildJoinScene(Stage stage, ChatContext context) {
         SceneWrapper sceneWrapper = Initializer.buildScene("join-view.fxml");
+
+        stage.setScene(sceneWrapper.getScene());
 
         JoinController controller = sceneWrapper.getLoader().getController();
         controller.setContext(context);
 
-        return sceneWrapper.getScene();
+        if (!stage.isShowing()) {
+            stage.show();
+        }
     }
 
     public static Scene buildMainScene(ChatContext context) {

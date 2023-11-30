@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 import static java.nio.channels.SelectionKey.*;
 
-//TODO: Show quit if the connection was closed, and the attachment had an username
 public class ChatServer implements Runnable {
     private final ServerSocketChannel server;
     private final Selector mainSelector;
@@ -30,7 +29,7 @@ public class ChatServer implements Runnable {
         this.server.configureBlocking(false);
         this.server.register(mainSelector, OP_ACCEPT);
 
-        this.log(String.format("Started on: %s",this.server.getLocalAddress()));
+        this.log(String.format("Started on: %s", this.server.getLocalAddress()));
     }
 
     public ChatServer() throws IOException {
@@ -60,7 +59,7 @@ public class ChatServer implements Runnable {
                         this.logError("IllegalArgumentException caught", e);
 
                     } catch (SocketException | IllegalStateException e) {
-                        this.removeConnection(key);
+                        this.handleQuitCommand(key);
 
                         this.logError("Removing connection", e);
                     }
@@ -149,13 +148,18 @@ public class ChatServer implements Runnable {
         this.registerInWriteSelector(key);
     }
 
-    private void handleToCommand(SelectionKey key, String[] data) {
+    private void handleToCommand(SelectionKey key, String[] data) throws IOException {
         String origin = Attachment.getUsername(key);
         String destination = data[1];
 
-        this.getAllConnections().stream()
-                .filter(k -> destination.equals(Attachment.getUsername(k)))
-                .forEach(k -> Attachment.enqueueMessage(k, ChatUtility.newDirectMessageResponse(origin, data[2])));
+        for (SelectionKey connection : this.getAllConnections()) {
+            if (destination.equals(Attachment.getUsername(connection))) {
+                Attachment.enqueueMessage(connection, ChatUtility.newDirectMessageResponse(origin, data[2]));
+                this.registerInWriteSelector(connection);
+
+                break;
+            }
+        }
     }
 
     private void handlePublicCommand(SelectionKey origin, String[] data) throws IOException {

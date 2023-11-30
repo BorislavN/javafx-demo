@@ -56,11 +56,13 @@ public class SettingsController {
                 this.service.setOnSucceeded((e) -> {
                     e.consume();
 
-                    this.context.shutdown();
+                   if (this.context!=null){
+                       this.context.shutdown();
+                   }
+
                     this.context = this.service.getValue();
 
                     stage.setOnCloseRequest(null);
-
                     stage.close();
                 });
 

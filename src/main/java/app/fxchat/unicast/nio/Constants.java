@@ -2,9 +2,7 @@ package app.fxchat.unicast.nio;
 
 public class Constants {
     public static final String HOST = "localhost";
-//    public static final String HOST = "192.168.0.100";
     public static final int PORT = 6009;
-//    public static final int PORT = 16969;
     public static final int MESSAGE_LIMIT = 300;
     public static final int USERNAME_LIMIT = 30;
 
@@ -22,5 +20,7 @@ public class Constants {
     public static final String CHANGED_FLAG = "#changed";
     public static final String LEFT_FLAG = "#left";
     public static final String USERNAME_EXCEPTION_FLAG = "#usernameException";
+
+    public static final String DEFAULT_KEY = "default";
 }
 

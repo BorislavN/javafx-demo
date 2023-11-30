@@ -4,12 +4,14 @@ import app.fxchat.unicast.nio.ChatUtility;
 import app.fxchat.unicast.nio.Constants;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 public class JoinController {
     @FXML
@@ -35,6 +37,9 @@ public class JoinController {
         }
 
         this.context.setMessageListener(this.getChangeHandler());
+
+        Stage currentStage = Initializer.getStage(this.joinBtn);
+        currentStage.setOnCloseRequest(this.cleanupBeforeClose(context, currentStage));
     }
 
     public void onJoin(ActionEvent event) {
@@ -120,5 +125,20 @@ public class JoinController {
         this.joinPageError.setText(message);
         this.joinPageError.setVisible(true);
         this.joinBtn.setDisable(disableJoin);
+    }
+
+    private EventHandler<WindowEvent> cleanupBeforeClose(ChatContext context, Stage stage) {
+        return event -> {
+            event.consume();
+
+            context.getSenderService().setOnSucceeded((e) -> this.closeWindow(context, stage));
+            context.getSenderService().setOnFailed((e) -> this.closeWindow(context, stage));
+            context.enqueueMessage(ChatUtility.newQuitRequest());
+        };
+    }
+
+    private void closeWindow(ChatContext context, Stage stage) {
+        context.shutdown();
+        stage.close();
     }
 }

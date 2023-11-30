@@ -5,20 +5,21 @@ import app.fxchat.unicast.nio.Constants;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.util.List;
 
-//TODO: Fix the many errors, add a singular event handler, not for each contact
+//TODO: Add a singular event handler, not for each contact
 //TODO: Fix CSS, add CSS stying when messages are pending on an contact
-//TODO: Fix messages not being received/sent
 public class MessageController {
     @FXML
     private VBox contacts;
@@ -115,6 +116,8 @@ public class MessageController {
                 }
             }
 
+            this.contacts.addEventHandler(MouseEvent.MOUSE_CLICKED, this.contactClickHandler());
+
             this.selectFirstContact();
             this.stage.show();
 
@@ -168,8 +171,6 @@ public class MessageController {
             String sender = data[1];
             String text = data[2];
 
-            this.context.addToHistory(sender, text);
-
             if (sender.equals(this.currentDestination)) {
                 this.appendToChatArea(text);
             }
@@ -193,29 +194,20 @@ public class MessageController {
 
     private Button createNewContact(String username) {
         Button button = new Button(username);
-        button.setId(username);
-
-//        VBox.setVgrow(button, Priority.ALWAYS);
-
         button.getStyleClass().add("atButton");
-        button.setOnAction((e) -> this.contactAction(e, button));
+        button.setId(username);
 
         return button;
     }
 
-    private void contactAction(ActionEvent event, Button button) {
-        event.consume();
+    private EventHandler<MouseEvent> contactClickHandler() {
+        return (event) -> {
+            Node node = (Node) event.getTarget();
 
-        this.contacts.getChildren().stream()
-                .filter(n -> n.getId().equals(this.currentDestination))
-                .forEach(e -> e.getStyleClass().remove("selectedButton"));
-
-        button.getStyleClass().add("selectedButton");
-
-        this.currentDestination = button.getId();
-
-        this.setDestinationLabel();
-        this.loadFromHistory();
+            if (node.getId() != null) {
+                this.selectContact(node);
+            }
+        };
     }
 
     private void selectFirstContact() {
@@ -228,12 +220,14 @@ public class MessageController {
             return;
         }
 
-        Node firstContact = contacts.get(0);
-        firstContact.getStyleClass().add("selectedButton");
-
-        this.currentDestination = firstContact.getId();
-
+        this.selectContact(contacts.get(0));
         this.sendBtn.setDisable(false);
+    }
+
+    private void selectContact(Node button) {
+        this.currentDestination = button.getId();
+
+        button.getStyleClass().add("selectedButton");
         this.setDestinationLabel();
         this.loadFromHistory();
     }

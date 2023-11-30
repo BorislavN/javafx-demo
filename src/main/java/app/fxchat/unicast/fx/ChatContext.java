@@ -91,7 +91,7 @@ public class ChatContext {
         if (!this.senderService.isRunning()) {
             this.senderService.setCurrentMessage(message);
             this.senderService.reset();
-            this.senderService.start();
+            this.senderService.restart();
 
             return;
         }

@@ -11,6 +11,13 @@ public class SenderService extends Service<Void> {
     public SenderService(ChatClient client) {
         this.client = client;
         this.currentMessage = null;
+
+//        this.setExecutor(Executors.newCachedThreadPool(r -> {
+//            Thread thread = new Thread(r);
+//            thread.setDaemon(true);
+//
+//            return thread;
+//        }));
     }
 
     public void setCurrentMessage(String currentMessage) {

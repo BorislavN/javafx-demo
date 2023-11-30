@@ -21,39 +21,46 @@ public class ReceiverTask extends Task<Void> {
 
     @Override
     protected Void call() throws IOException {
-        Selector selector = this.client.getSelector();
+        try {
+            this.logState(this.client, "ReceiverService starting...");
 
-        while (this.client.isLive()) {
-            if (this.isCancelled()) {
-                break;
-            }
+            Selector selector = this.client.getSelector();
 
-            selector.select();
+            while (this.client.isLive()) {
+                if (this.isCancelled()) {
+                    break;
+                }
 
-            for (SelectionKey key : selector.selectedKeys()) {
-                if (key.isValid() && key.isReadable()) {
-                    String message = this.client.receiveMessage();
+                selector.select();
 
-                    if (message != null) {
-                        Platform.runLater(() -> {
-                            if (message.startsWith(Constants.MEMBERS_COMMAND)) {
-                                this.latestMessage.setValue(null);
-                            }
+                for (SelectionKey key : selector.selectedKeys()) {
+                    if (key.isValid() && key.isReadable()) {
+                        String message = this.client.receiveMessage();
 
-                            this.latestMessage.setValue(message);
-                        });
+                        if (message != null) {
+                            Platform.runLater(() -> {
+                                if (message.startsWith(Constants.MEMBERS_COMMAND)) {
+                                    this.latestMessage.setValue(null);
+                                }
+
+                                this.latestMessage.setValue(message);
+                            });
+                        }
                     }
                 }
             }
-        }
 
-        return null;
+            return null;
+
+        } finally {
+            this.logState(this.client, "ReceiverService finishing...");
+        }
     }
 
-//    private void logMessage(String group, int port, String message) {
-//        System.out.println("----------------------------------------------");
-//        System.out.println(Thread.currentThread().getName() + ":");
-//        System.out.printf("%s:%d - %s%n", group, port, message);
-//        System.out.println("----------------------------------------------");
-//    }
+    private void logState(ChatClient client, String message) {
+        System.out.println("----------------------------------------------");
+        System.out.println(Thread.currentThread().getName() + ":");
+        System.out.printf("%s:%d - %s%n", client.getAddress(), client.getPort(), message);
+        System.out.println("----------------------------------------------");
+    }
 }
