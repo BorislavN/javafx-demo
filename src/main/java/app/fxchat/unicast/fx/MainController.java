@@ -32,7 +32,7 @@ public class MainController {
         this.context = context;
         this.context.setMessageListener(this.getChangeHandler());
 
-        this.chatArea.setText(String.join(System.lineSeparator(), this.context.getChatHistory().get("public")));
+        this.context.getChatHistory().get("public").forEach(this::appendToTextArea);
         this.setWelcomeMessage();
     }
 
@@ -89,7 +89,8 @@ public class MainController {
             this.dmButton.setDisable(false);
             this.backBtn.setDisable(false);
 
-            stage.removeEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.enableButtons(stage));
+            System.out.println(Thread.currentThread().getName());
+            System.out.println(stage.getTitle());
         };
     }
 
@@ -119,7 +120,7 @@ public class MainController {
     }
 
     private void appendToTextArea(String message) {
-        this.chatArea.appendText(System.lineSeparator());
         this.chatArea.appendText(message);
+        this.chatArea.appendText(System.lineSeparator());
     }
 }

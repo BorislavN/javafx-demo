@@ -14,11 +14,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.List;
+
 //TODO: Fix the many errors, add a singular event handler, not for each contact
 //TODO: Fix CSS, add CSS stying when messages are pending on an contact
-//TODO: Rework all the listeners/handlers, when using a property like "onCloseRequest" the EventHandlers are overwritten
-// when adding and removing listeners, we need to create an instance of the listener beforehand, and pass the same
-// instance to both the add and remove method
+//TODO: Fix messages not being received/sent
 public class MessageController {
     @FXML
     private VBox contacts;
@@ -89,15 +89,14 @@ public class MessageController {
         this.context = context;
         this.stage = stage;
 
+        ChangeListener<String> changeListener = this.getChangeHandler();
+
         //Add listener
-        this.context.getReceiverService().latestMessageProperty().addListener(this.getChangeHandler());
+        this.context.getReceiverService().latestMessageProperty().addListener(changeListener);
 
         //Remove listener before close
         this.stage.setOnCloseRequest((e) -> {
-            System.out.println("removing");
-            this.context.getReceiverService().latestMessageProperty().removeListener(this.getChangeHandler());
-
-            System.out.println();
+            this.context.getReceiverService().latestMessageProperty().removeListener(changeListener);
         });
 
         //Request online users
@@ -212,8 +211,11 @@ public class MessageController {
                 .forEach(e -> e.getStyleClass().remove("selectedButton"));
 
         button.getStyleClass().add("selectedButton");
+
         this.currentDestination = button.getId();
+
         this.setDestinationLabel();
+        this.loadFromHistory();
     }
 
     private void selectFirstContact() {
@@ -230,12 +232,22 @@ public class MessageController {
         firstContact.getStyleClass().add("selectedButton");
 
         this.currentDestination = firstContact.getId();
-        this.setDestinationLabel();
+
         this.sendBtn.setDisable(false);
+        this.setDestinationLabel();
+        this.loadFromHistory();
+    }
+
+    private void loadFromHistory() {
+        List<String> history = this.context.getChatHistory().get(this.currentDestination);
+
+        if (history != null) {
+            history.forEach(this::appendToChatArea);
+        }
     }
 
     private void appendToChatArea(String text) {
-        this.chatArea.appendText(System.lineSeparator());
         this.chatArea.appendText(text);
+        this.chatArea.appendText(System.lineSeparator());
     }
 }

@@ -11,9 +11,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
-//TODO: introduce better exceptuion handling - check if the client is connected,
-// when the server is closed we can disable the buttons, show an error popup...
-// when the SenderTask fails show error (see if we can get exception message from the task)
 public class JoinController {
     @FXML
     private Label joinPageError;

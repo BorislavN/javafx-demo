@@ -3,12 +3,10 @@ package app.fxchat.unicast.fx;
 import app.fxchat.unicast.service.ValidationService;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 
 public class SettingsController {
     @FXML
@@ -49,7 +47,7 @@ public class SettingsController {
             }
 
             if (!this.service.isRunning()) {
-                stage.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.preventClose());
+                stage.setOnCloseRequest(Event::consume);
 
                 this.service.reset();
                 this.service.setParameters(newAddress, newPort);
@@ -61,7 +59,7 @@ public class SettingsController {
                     this.context.shutdown();
                     this.context = this.service.getValue();
 
-                    stage.removeEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.preventClose());
+                    stage.setOnCloseRequest(null);
 
                     stage.close();
                 });
@@ -72,7 +70,7 @@ public class SettingsController {
                     this.settingsError.setText("Invalid address!");
                     this.settingsError.setVisible(true);
 
-                    stage.removeEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.preventClose());
+                    stage.setOnCloseRequest(null);
                 });
             }
 
@@ -96,9 +94,5 @@ public class SettingsController {
 
     private boolean portIsValid(int port) {
         return port >= 1024 && port <= 65535;
-    }
-
-    private EventHandler<WindowEvent> preventClose() {
-        return Event::consume;
     }
 }

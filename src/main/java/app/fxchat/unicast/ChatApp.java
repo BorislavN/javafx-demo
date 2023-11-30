@@ -5,7 +5,6 @@ import app.fxchat.unicast.fx.Initializer;
 import app.fxchat.unicast.nio.ChatUtility;
 import app.fxchat.unicast.nio.Constants;
 import javafx.application.Application;
-import javafx.concurrent.WorkerStateEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -16,17 +15,16 @@ import java.io.IOException;
 public class ChatApp extends Application {
     @Override
     public void start(Stage stage) {
-        ChatContext temp;
+        ChatContext context = null;
 
         try {
-            temp = new ChatContext(Constants.HOST, Constants.PORT);
+            context = new ChatContext(Constants.HOST, Constants.PORT);
         } catch (IOException e) {
-            temp = null;
+            ChatUtility.printAsException("Context failed initialization!");
         }
 
-        ChatContext context = temp;
         Scene scene = Initializer.buildJoinScene(context);
-        stage.setOnCloseRequest((event -> this.onClose(event, stage, context)));
+        stage.setOnCloseRequest(this.cleanup(context, stage));
 
         stage.setTitle("Chat Client");
         stage.setScene(scene);
@@ -37,29 +35,21 @@ public class ChatApp extends Application {
         launch(args);
     }
 
-    private void onClose(WindowEvent event, Stage stage, ChatContext context) {
-        if (context != null && context.getUsername() != null) {
+    private EventHandler<WindowEvent> cleanup(ChatContext context, Stage stage) {
+        return event -> {
             event.consume();
 
-            context.enqueueMessage(ChatUtility.newQuitRequest());
+            if (context != null && context.getUsername() != null) {
+                context.enqueueMessage(ChatUtility.newQuitRequest());
 
-            context.getSenderService().setOnSucceeded(this.close(context, stage));
-            context.getSenderService().setOnFailed(this.close(context, stage));
-
-            context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED, this.close(context, stage));
-            context.getSenderService().removeEventHandler(WorkerStateEvent.WORKER_STATE_FAILED, this.close(context, stage));
-        }
+                context.getSenderService().setOnSucceeded((e) -> close(context, stage));
+                context.getSenderService().setOnFailed((e) -> close(context, stage));
+            }
+        };
     }
 
-    private EventHandler<WorkerStateEvent> close(ChatContext context, Stage stage) {
-        return (e) -> {
-            e.consume();
-
-            if (context!=null){
-                context.shutdown();
-            }
-
-            stage.close();
-        };
+    private void close(ChatContext context, Stage stage) {
+        context.shutdown();
+        stage.close();
     }
 }
