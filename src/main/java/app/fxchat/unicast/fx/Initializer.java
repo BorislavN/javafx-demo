@@ -1,11 +1,15 @@
 package app.fxchat.unicast.fx;
 
 import app.fxchat.unicast.ChatApp;
+import javafx.animation.Animation;
+import javafx.animation.FadeTransition;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.IOException;
 
@@ -82,6 +86,16 @@ public class Initializer {
         }
 
         return new SceneWrapper(fxmlLoader, scene);
+    }
+
+    public static void newButtonAnimation(Button button) {
+        FadeTransition transition = new FadeTransition(Duration.seconds(2), button);
+        transition.setFromValue(1);
+        transition.setToValue(0.55);
+        transition.setAutoReverse(true);
+        transition.setCycleCount(Animation.INDEFINITE);
+
+        transition.play();
     }
 
     private static Stage buildStage(String title, Modality modality) {

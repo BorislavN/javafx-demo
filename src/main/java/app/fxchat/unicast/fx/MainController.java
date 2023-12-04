@@ -16,6 +16,7 @@ import javafx.stage.WindowEvent;
 //TODO: introduce better exceptuion handling - check if the client is connected,
 // when the server is closed we can disable the buttons, show an error popup...
 // when the SenderTask fails show error (see if we can get exception message from the task)
+//TODO: make use of the opacity animation
 public class MainController {
     @FXML
     private Label announcementMessage;
@@ -37,6 +38,8 @@ public class MainController {
 
     public void onSend(ActionEvent event) {
         event.consume();
+
+        Initializer.newButtonAnimation(this.dmButton);
 
         try {
             String message = this.messageInput.getText();

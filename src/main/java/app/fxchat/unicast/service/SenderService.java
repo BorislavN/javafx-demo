@@ -4,6 +4,8 @@ import app.fxchat.unicast.nio.ChatClient;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
+import java.util.concurrent.Executors;
+
 public class SenderService extends Service<Void> {
     private final ChatClient client;
     private String currentMessage;
@@ -12,12 +14,13 @@ public class SenderService extends Service<Void> {
         this.client = client;
         this.currentMessage = null;
 
-//        this.setExecutor(Executors.newCachedThreadPool(r -> {
-//            Thread thread = new Thread(r);
-//            thread.setDaemon(true);
-//
-//            return thread;
-//        }));
+        //Creates new thread, only if current is occupied
+        this.setExecutor(Executors.newCachedThreadPool(r -> {
+            Thread thread = new Thread(r);
+            thread.setDaemon(true);
+
+            return thread;
+        }));
     }
 
     public void setCurrentMessage(String currentMessage) {

@@ -34,6 +34,7 @@ public class JoinController {
         if (this.context.getUsername() != null) {
             this.chosenUsername = this.context.getUsername();
             this.usernameInput.setText(this.chosenUsername);
+            this.usernameInput.positionCaret(this.chosenUsername.length());
         }
 
         this.context.setMessageListener(this.getChangeHandler());
@@ -81,6 +82,7 @@ public class JoinController {
         this.setContext(Initializer.buildSettingsStage(this.context));
 
         if (ChatContext.isValid(this.context)) {
+            this.joinPageError.setVisible(false);
             this.joinBtn.setDisable(false);
         }
     }

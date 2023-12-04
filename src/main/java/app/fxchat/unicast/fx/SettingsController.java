@@ -8,6 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
+//TODO: Display better error messages
 public class SettingsController {
     @FXML
     private Label settingsError;
@@ -56,9 +57,9 @@ public class SettingsController {
                 this.service.setOnSucceeded((e) -> {
                     e.consume();
 
-                   if (this.context!=null){
-                       this.context.shutdown();
-                   }
+                    if (this.context != null) {
+                        this.context.shutdown();
+                    }
 
                     this.context = this.service.getValue();
 
@@ -69,7 +70,19 @@ public class SettingsController {
                 this.service.setOnFailed((e) -> {
                     e.consume();
 
-                    this.settingsError.setText("Invalid address!");
+                    String cause = e.getSource().getException().getClass().getSimpleName();
+                    String message = "Client failed initialization!";
+
+
+                    if ("UnresolvedAddressException".equals(cause)) {
+                        message = "Address cannot be resolved!";
+                    }
+
+                    if ("ConnectException".equals(cause)) {
+                        message = "Connection attempt failed!";
+                    }
+
+                    this.settingsError.setText(message);
                     this.settingsError.setVisible(true);
 
                     stage.setOnCloseRequest(null);
