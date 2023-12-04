@@ -18,8 +18,8 @@ import javafx.stage.Stage;
 
 import java.util.List;
 
-//TODO: Add a singular event handler, not for each contact
 //TODO: Fix CSS, add CSS stying when messages are pending on an contact
+//TODO: make use of the opacity animation
 public class MessageController {
     @FXML
     private VBox contacts;

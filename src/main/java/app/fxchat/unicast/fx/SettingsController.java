@@ -1,5 +1,6 @@
 package app.fxchat.unicast.fx;
 
+import app.fxchat.unicast.nio.Constants;
 import app.fxchat.unicast.service.ValidationService;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
@@ -8,7 +9,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
-//TODO: Display better error messages
 public class SettingsController {
     @FXML
     private Label settingsError;
@@ -41,9 +41,7 @@ public class SettingsController {
             }
 
             if (!this.portIsValid(newPort)) {
-                this.settingsError.setText("Invalid port!");
-                this.settingsError.setVisible(true);
-
+                this.setErrorMessage("Invalid port!");
                 return;
             }
 
@@ -82,16 +80,14 @@ public class SettingsController {
                         message = "Connection attempt failed!";
                     }
 
-                    this.settingsError.setText(message);
-                    this.settingsError.setVisible(true);
+                    this.setErrorMessage(message);
 
                     stage.setOnCloseRequest(null);
                 });
             }
 
         } catch (NumberFormatException e) {
-            this.settingsError.setText("Port must be integer!");
-            this.settingsError.setVisible(true);
+            this.setErrorMessage("Port must be integer!");
         }
     }
 
@@ -104,10 +100,21 @@ public class SettingsController {
             this.context = context;
             this.addressInput.setText(this.context.getClient().getAddress());
             this.portInput.setText(String.valueOf(this.context.getClient().getPort()));
+
+            return;
         }
+
+        this.setErrorMessage("Chat server is down!");
+        this.addressInput.setText(Constants.HOST);
+        this.portInput.setText(String.valueOf(Constants.PORT));
     }
 
     private boolean portIsValid(int port) {
         return port >= 1024 && port <= 65535;
+    }
+
+    private void setErrorMessage(String message) {
+        this.settingsError.setText(message);
+        this.settingsError.setVisible(true);
     }
 }
