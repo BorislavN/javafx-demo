@@ -3,6 +3,7 @@ package app.fxchat.unicast.fx;
 import app.fxchat.unicast.nio.ChatUtility;
 import app.fxchat.unicast.nio.Constants;
 import javafx.beans.value.ChangeListener;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -13,10 +14,11 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
-//TODO: introduce better exceptuion handling - check if the client is connected,
-// when the server is closed we can disable the buttons, show an error popup...
-// when the SenderTask fails show error (see if we can get exception message from the task)
+//TODO: introduce exceptuion handling in the "DM" stage, when the connection is lost
+//TODO: add the outgoing messages to the TextArea, only if they were sent successfully
 //TODO: make use of the opacity animation
+
+//TODO: Keep history when reconnecting to the same server???
 public class MainController {
     @FXML
     private Label announcementMessage;
@@ -31,6 +33,7 @@ public class MainController {
     public void setContext(ChatContext context) {
         this.context = context;
         this.context.setMessageListener(this.getChangeHandler());
+        this.context.setReceiverServiceFailHandler(this.failureHandler());
 
         this.context.getChatHistory().get("public").forEach(this::appendToTextArea);
         this.setWelcomeMessage();
@@ -84,24 +87,6 @@ public class MainController {
         window.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.enableButtons());
     }
 
-    private EventHandler<WindowEvent> enableButtons() {
-        return (e) -> {
-            this.dmButton.setDisable(false);
-            this.backBtn.setDisable(false);
-        };
-    }
-
-
-    private void setWelcomeMessage() {
-        this.announcementMessage.setStyle("");
-        this.announcementMessage.setText(String.format("Welcome, %s!", this.context.getUsername()));
-    }
-
-    private void setErrorMessage(String errorMessage) {
-        this.announcementMessage.setStyle("-fx-background-color: #eb4d42");
-        this.announcementMessage.setText(errorMessage);
-    }
-
     public ChangeListener<String> getChangeHandler() {
         return (observable, oldValue, newValue) -> {
 
@@ -113,7 +98,7 @@ public class MainController {
                         String key = data[1];
 
                         this.context.addToHistory(key, data[2]);
-                        //TODO: if "DM" button is disabled - add  blinking CSS to signal pending DMs
+                        //TODO: if "DM Stage" is not visible - add blinking CSS to the "Open DMs button"
 
                         return;
                     }
@@ -124,6 +109,35 @@ public class MainController {
                     this.appendToTextArea(message);
                 }
             }
+        };
+    }
+
+    private EventHandler<WindowEvent> enableButtons() {
+        return (e) -> {
+            if (this.context.isClientLive()) {
+                this.dmButton.setDisable(false);
+            }
+            this.backBtn.setDisable(false);
+        };
+    }
+
+    private void setWelcomeMessage() {
+        this.announcementMessage.setStyle("");
+        this.announcementMessage.setText(String.format("Welcome, %s!", this.context.getUsername()));
+    }
+
+    private void setErrorMessage(String errorMessage) {
+        this.announcementMessage.setStyle("-fx-background-color: #eb4d42");
+        this.announcementMessage.setText(errorMessage);
+    }
+
+    private EventHandler<WorkerStateEvent> failureHandler() {
+        return (event) -> {
+            this.setErrorMessage("Connection lost!");
+            this.sendBtn.setDisable(true);
+            this.dmButton.setDisable(true);
+
+            this.context.shutdown();
         };
     }
 

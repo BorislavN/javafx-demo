@@ -30,8 +30,10 @@ public class SettingsController {
             String newAddress = this.addressInput.getText();
             int newPort = Integer.parseInt(this.portInput.getText());
 
-            String oldAddress = ChatContext.isValid(this.context) ? this.context.getClient().getAddress() : "";
-            int oldPort = ChatContext.isValid(this.context) ? this.context.getClient().getPort() : 0;
+            boolean isValid = ChatContext.isNotNull(this.context) && this.context.isClientLive();
+
+            String oldAddress = isValid ? this.context.getClient().getAddress() : "";
+            int oldPort = isValid ? this.context.getClient().getPort() : 0;
 
             Stage stage = Initializer.getStage(this.addressInput);
 
@@ -96,10 +98,14 @@ public class SettingsController {
     }
 
     public void setContext(ChatContext context) {
-        if (ChatContext.isValid(context)) {
+        if (ChatContext.isNotNull(context)) {
             this.context = context;
             this.addressInput.setText(this.context.getClient().getAddress());
             this.portInput.setText(String.valueOf(this.context.getClient().getPort()));
+
+            if (!this.context.isClientLive()) {
+                this.setErrorMessage("Connection was lost!");
+            }
 
             return;
         }

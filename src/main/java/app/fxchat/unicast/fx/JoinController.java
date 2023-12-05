@@ -3,6 +3,7 @@ package app.fxchat.unicast.fx;
 import app.fxchat.unicast.nio.ChatUtility;
 import app.fxchat.unicast.nio.Constants;
 import javafx.beans.value.ChangeListener;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -24,7 +25,7 @@ public class JoinController {
     private String chosenUsername;
 
     public void setContext(ChatContext context) {
-        if (!ChatContext.isValid(context)) {
+        if (!ChatContext.isNotNull(context)) {
             this.setErrorMessage("Context failed initialization!", true);
             return;
         }
@@ -37,10 +38,19 @@ public class JoinController {
             this.usernameInput.positionCaret(this.chosenUsername.length());
         }
 
+        if (!this.context.isClientLive()) {
+            this.setErrorMessage("Connection lost!", true);
+            return;
+        }
+
         this.context.setMessageListener(this.getChangeHandler());
+        this.context.setReceiverServiceFailHandler(this.failureHandler());
 
         Stage currentStage = Initializer.getStage(this.joinBtn);
-        currentStage.setOnCloseRequest(this.cleanupBeforeClose(context, currentStage));
+
+        if (currentStage.getOnCloseRequest() == null) {
+            currentStage.setOnCloseRequest(this.cleanupBeforeClose(context, currentStage));
+        }
     }
 
     public void onJoin(ActionEvent event) {
@@ -81,7 +91,7 @@ public class JoinController {
 
         this.setContext(Initializer.buildSettingsStage(this.context));
 
-        if (ChatContext.isValid(this.context)) {
+        if (ChatContext.isNotNull(this.context)&&this.context.isClientLive()) {
             this.joinPageError.setVisible(false);
             this.joinBtn.setDisable(false);
         }
@@ -123,6 +133,13 @@ public class JoinController {
         };
     }
 
+    private EventHandler<WorkerStateEvent> failureHandler() {
+        return (event) -> {
+            this.setErrorMessage("Connection lost!", true);
+            this.context.shutdown();
+        };
+    }
+
     private void setErrorMessage(String message, boolean disableJoin) {
         this.joinPageError.setText(message);
         this.joinPageError.setVisible(true);
@@ -133,8 +150,14 @@ public class JoinController {
         return event -> {
             event.consume();
 
-            context.getSenderService().setOnSucceeded((e) -> this.closeWindow(context, stage));
+            context.getSenderService().setOnSucceeded((e) -> {
+                if (context.isMessageQueueEmpty()) {
+                    this.closeWindow(context, stage);
+                }
+            });
+
             context.getSenderService().setOnFailed((e) -> this.closeWindow(context, stage));
+
             context.enqueueMessage(ChatUtility.newQuitRequest());
         };
     }

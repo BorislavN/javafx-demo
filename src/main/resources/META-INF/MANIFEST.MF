@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Main-Class: app.fxchat.multicast.ChatApplication
+Main-Class: app.fxchat.unicast.ChatApp
 Class-Path: javafx-controls-21-ea+17-win.jar javafx-fxml-21-ea+17.jar ja
  vafx-base-21-ea+17.jar javafx-graphics-21-ea+17.jar javafx-graphics-21-
  ea+17-win.jar javafx-base-21-ea+17-win.jar javafx-fxml-21-ea+17-win.jar

@@ -175,6 +175,8 @@ public class MessageController {
                 this.appendToChatArea(text);
             }
 
+            //TODO: If not - add blinking animation to the destination button
+
             return true;
         }
 

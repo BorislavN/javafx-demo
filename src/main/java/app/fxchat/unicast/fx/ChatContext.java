@@ -7,6 +7,7 @@ import app.fxchat.unicast.service.ReceiverService;
 import app.fxchat.unicast.service.SenderService;
 import javafx.beans.value.ChangeListener;
 import javafx.concurrent.WorkerStateEvent;
+import javafx.event.EventHandler;
 
 import java.io.IOException;
 import java.util.*;
@@ -81,6 +82,11 @@ public class ChatContext {
         this.receiverService.latestMessageProperty().addListener(this.messageListener);
     }
 
+    //The event handler is overwritten on each call
+    public void setReceiverServiceFailHandler(EventHandler<WorkerStateEvent> handler) {
+        this.receiverService.setOnFailed(handler);
+    }
+
     public Map<String, List<String>> getChatHistory() {
         return Collections.unmodifiableMap(this.chatHistory);
     }
@@ -126,6 +132,14 @@ public class ChatContext {
         return this.client != null && this.senderService != null && this.receiverService != null;
     }
 
+    public boolean isMessageQueueEmpty() {
+        return this.typedMessages.isEmpty();
+    }
+
+    public boolean isClientLive() {
+        return this.client != null && this.client.isLive();
+    }
+
     public void shutdown() {
         if (this.client != null) {
             this.client.shutdown();
@@ -142,7 +156,7 @@ public class ChatContext {
         }
     }
 
-    public static boolean isValid(ChatContext context) {
+    public static boolean isNotNull(ChatContext context) {
         return context != null && context.isInitialized();
     }
 }
