@@ -91,6 +91,16 @@ public class ChatContext {
         return Collections.unmodifiableMap(this.chatHistory);
     }
 
+    public void copyHistory(Map<String, List<String>> history) {
+        for (String key : history.keySet()) {
+            this.chatHistory.merge(key, history.get(key), (o, n) -> {
+                o.addAll(n);
+
+                return o;
+            });
+        }
+    }
+
     //The messages are sent so fast, that in majority of cases we will not need the queue
     //The thread executing the task will be free by the time we call this method again
     public void enqueueMessage(String message) {

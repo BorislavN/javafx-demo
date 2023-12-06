@@ -4,6 +4,8 @@ import app.fxchat.unicast.fx.ChatContext;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
+import java.util.concurrent.Executors;
+
 //Validates that the context is initialized successfully
 public class ValidationService extends Service<ChatContext> {
     private String address;
@@ -12,6 +14,14 @@ public class ValidationService extends Service<ChatContext> {
     public void setParameters(String address,int port) {
         this.address = address;
         this.port = port;
+
+        //Creates new thread, only if current is occupied
+        this.setExecutor(Executors.newCachedThreadPool(r -> {
+            Thread thread = new Thread(r);
+            thread.setDaemon(true);
+
+            return thread;
+        }));
     }
 
     @Override

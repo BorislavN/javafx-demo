@@ -30,16 +30,22 @@ public class SettingsController {
             String newAddress = this.addressInput.getText();
             int newPort = Integer.parseInt(this.portInput.getText());
 
-            boolean isValid = ChatContext.isNotNull(this.context) && this.context.isClientLive();
+            boolean isInitialized = ChatContext.isNotNull(this.context);
+            boolean saveHistory = false;
 
-            String oldAddress = isValid ? this.context.getClient().getAddress() : "";
-            int oldPort = isValid ? this.context.getClient().getPort() : 0;
+            String oldAddress = isInitialized ? this.context.getClient().getAddress() : "";
+            int oldPort = isInitialized ? this.context.getClient().getPort() : 0;
 
             Stage stage = Initializer.getStage(this.addressInput);
 
             if (newAddress.equals(oldAddress) && newPort == oldPort) {
-                stage.close();
-                return;
+                if (this.context.isClientLive()) {
+                    stage.close();
+
+                    return;
+                }
+
+                saveHistory = true;
             }
 
             if (!this.portIsValid(newPort)) {
@@ -47,46 +53,7 @@ public class SettingsController {
                 return;
             }
 
-            if (!this.service.isRunning()) {
-                stage.setOnCloseRequest(Event::consume);
-
-                this.service.reset();
-                this.service.setParameters(newAddress, newPort);
-                this.service.start();
-
-                this.service.setOnSucceeded((e) -> {
-                    e.consume();
-
-                    if (this.context != null) {
-                        this.context.shutdown();
-                    }
-
-                    this.context = this.service.getValue();
-
-                    stage.setOnCloseRequest(null);
-                    stage.close();
-                });
-
-                this.service.setOnFailed((e) -> {
-                    e.consume();
-
-                    String cause = e.getSource().getException().getClass().getSimpleName();
-                    String message = "Client failed initialization!";
-
-
-                    if ("UnresolvedAddressException".equals(cause)) {
-                        message = "Address cannot be resolved!";
-                    }
-
-                    if ("ConnectException".equals(cause)) {
-                        message = "Connection attempt failed!";
-                    }
-
-                    this.setErrorMessage(message);
-
-                    stage.setOnCloseRequest(null);
-                });
-            }
+            this.initializeContext(stage, newAddress, newPort, saveHistory);
 
         } catch (NumberFormatException e) {
             this.setErrorMessage("Port must be integer!");
@@ -113,6 +80,53 @@ public class SettingsController {
         this.setErrorMessage("Chat server is down!");
         this.addressInput.setText(Constants.HOST);
         this.portInput.setText(String.valueOf(Constants.PORT));
+    }
+
+    private void initializeContext(Stage stage, String newAddress, int newPort, boolean saveHistory) {
+        if (!this.service.isRunning()) {
+            stage.setOnCloseRequest(Event::consume);
+
+            this.service.reset();
+            this.service.setParameters(newAddress, newPort);
+            this.service.start();
+
+            this.service.setOnSucceeded((e) -> {
+                e.consume();
+
+                if (this.context != null) {
+                    this.context.shutdown();
+                }
+
+                if (saveHistory) {
+                    this.service.getValue().copyHistory(this.context.getChatHistory());
+                }
+
+                this.context = this.service.getValue();
+
+                stage.setOnCloseRequest(null);
+                stage.close();
+            });
+
+            this.service.setOnFailed((e) -> {
+                e.consume();
+
+                String cause = e.getSource().getException().getClass().getSimpleName();
+                String message = "Client failed initialization!";
+
+
+                if ("UnresolvedAddressException".equals(cause)) {
+                    message = "Address cannot be resolved!";
+                }
+
+                if ("ConnectException".equals(cause)) {
+                    message = "Connection attempt failed!";
+                }
+
+                this.setErrorMessage(message);
+
+                stage.setOnCloseRequest(null);
+            });
+        }
     }
 
     private boolean portIsValid(int port) {

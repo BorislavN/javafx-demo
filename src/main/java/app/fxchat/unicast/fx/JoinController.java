@@ -48,9 +48,7 @@ public class JoinController {
 
         Stage currentStage = Initializer.getStage(this.joinBtn);
 
-        if (currentStage.getOnCloseRequest() == null) {
-            currentStage.setOnCloseRequest(this.cleanupBeforeClose(context, currentStage));
-        }
+        currentStage.setOnCloseRequest(this.cleanupBeforeClose(context, currentStage));
     }
 
     public void onJoin(ActionEvent event) {
@@ -91,7 +89,7 @@ public class JoinController {
 
         this.setContext(Initializer.buildSettingsStage(this.context));
 
-        if (ChatContext.isNotNull(this.context)&&this.context.isClientLive()) {
+        if (ChatContext.isNotNull(this.context) && this.context.isClientLive()) {
             this.joinPageError.setVisible(false);
             this.joinBtn.setDisable(false);
         }
@@ -121,7 +119,7 @@ public class JoinController {
                         this.context.setUsername(this.context.extractMessageData(data[1], ";")[1]);
                     }
 
-                    this.context.addToHistory("public", value);
+                    this.context.addToHistory(Constants.DEFAULT_KEY, value);
 
                     this.showMainView();
                 }
@@ -136,6 +134,8 @@ public class JoinController {
     private EventHandler<WorkerStateEvent> failureHandler() {
         return (event) -> {
             this.setErrorMessage("Connection lost!", true);
+
+            this.context.addToHistory(Constants.DEFAULT_KEY,"Connection to server lost!");
             this.context.shutdown();
         };
     }

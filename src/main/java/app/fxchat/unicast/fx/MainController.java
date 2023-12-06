@@ -17,8 +17,6 @@ import javafx.stage.WindowEvent;
 //TODO: introduce exceptuion handling in the "DM" stage, when the connection is lost
 //TODO: add the outgoing messages to the TextArea, only if they were sent successfully
 //TODO: make use of the opacity animation
-
-//TODO: Keep history when reconnecting to the same server???
 public class MainController {
     @FXML
     private Label announcementMessage;
@@ -35,7 +33,7 @@ public class MainController {
         this.context.setMessageListener(this.getChangeHandler());
         this.context.setReceiverServiceFailHandler(this.failureHandler());
 
-        this.context.getChatHistory().get("public").forEach(this::appendToTextArea);
+        this.context.getChatHistory().get(Constants.DEFAULT_KEY).forEach(this::appendToTextArea);
         this.setWelcomeMessage();
     }
 
@@ -134,6 +132,8 @@ public class MainController {
     private EventHandler<WorkerStateEvent> failureHandler() {
         return (event) -> {
             this.setErrorMessage("Connection lost!");
+            this.context.addToHistory(Constants.DEFAULT_KEY,"Connection to server lost!");
+
             this.sendBtn.setDisable(true);
             this.dmButton.setDisable(true);
 
