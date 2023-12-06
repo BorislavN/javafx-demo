@@ -135,7 +135,7 @@ public class JoinController {
         return (event) -> {
             this.setErrorMessage("Connection lost!", true);
 
-            this.context.addToHistory(Constants.DEFAULT_KEY,"Connection to server lost!");
+            this.context.addToHistory(Constants.DEFAULT_KEY,"Connection to server was lost!");
             this.context.shutdown();
         };
     }

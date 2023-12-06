@@ -2,6 +2,7 @@ package app.fxchat.unicast.fx;
 
 import app.fxchat.unicast.nio.ChatUtility;
 import app.fxchat.unicast.nio.Constants;
+import javafx.animation.FadeTransition;
 import javafx.beans.value.ChangeListener;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
@@ -16,7 +17,9 @@ import javafx.stage.WindowEvent;
 
 //TODO: introduce exceptuion handling in the "DM" stage, when the connection is lost
 //TODO: add the outgoing messages to the TextArea, only if they were sent successfully
-//TODO: make use of the opacity animation
+
+//TODO: create a unseenDMs flag in the ChatContext, so the animation will continue playing after
+// the user changes their username
 public class MainController {
     @FXML
     private Label announcementMessage;
@@ -27,6 +30,7 @@ public class MainController {
     @FXML
     private TextArea chatArea;
     private ChatContext context;
+    private FadeTransition unseenMessagesAnimation;
 
     public void setContext(ChatContext context) {
         this.context = context;
@@ -39,8 +43,6 @@ public class MainController {
 
     public void onSend(ActionEvent event) {
         event.consume();
-
-        Initializer.newButtonAnimation(this.dmButton);
 
         try {
             String message = this.messageInput.getText();
@@ -77,6 +79,11 @@ public class MainController {
     public void onShowMessages(ActionEvent event) {
         event.consume();
 
+        if (this.unseenMessagesAnimation != null) {
+            this.unseenMessagesAnimation.stop();
+            this.dmButton.setOpacity(0.4);
+        }
+
         this.dmButton.setDisable(true);
         this.backBtn.setDisable(true);
 
@@ -92,16 +99,27 @@ public class MainController {
                 if (!newValue.startsWith(Constants.MEMBERS_COMMAND)) {
                     String[] data = this.context.extractMessageData(newValue, "\\|");
 
-                    if (newValue.startsWith(Constants.FROM_FLAG)) {
-                        String key = data[1];
+                    String user = data[1];
+                    String message = data[data.length - 1];
 
-                        this.context.addToHistory(key, data[2]);
-                        //TODO: if "DM Stage" is not visible - add blinking CSS to the "Open DMs button"
+                    if (newValue.startsWith(Constants.FROM_FLAG)) {
+                        this.context.addToHistory(user, message);
+
+                        if (!this.dmButton.isDisabled()) {
+                            if (this.unseenMessagesAnimation == null) {
+                                this.unseenMessagesAnimation = Initializer.newButtonAnimation(this.dmButton);
+                            }
+
+                            this.unseenMessagesAnimation.playFromStart();
+                        }
 
                         return;
                     }
 
-                    String message = data[data.length - 1];
+                    if (newValue.startsWith(Constants.LEFT_FLAG)) {
+                        this.context.removePrivateMessages(user);
+                    }
+
 
                     this.context.addToHistory(Constants.DEFAULT_KEY, message);
                     this.appendToTextArea(message);
@@ -114,6 +132,7 @@ public class MainController {
         return (e) -> {
             if (this.context.isClientLive()) {
                 this.dmButton.setDisable(false);
+                this.dmButton.setOpacity(1);
             }
             this.backBtn.setDisable(false);
         };
@@ -132,7 +151,7 @@ public class MainController {
     private EventHandler<WorkerStateEvent> failureHandler() {
         return (event) -> {
             this.setErrorMessage("Connection lost!");
-            this.context.addToHistory(Constants.DEFAULT_KEY,"Connection to server lost!");
+            this.context.addToHistory(Constants.DEFAULT_KEY, "Connection to server was lost!");
 
             this.sendBtn.setDisable(true);
             this.dmButton.setDisable(true);

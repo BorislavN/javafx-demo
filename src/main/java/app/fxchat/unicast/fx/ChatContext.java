@@ -101,6 +101,10 @@ public class ChatContext {
         }
     }
 
+    public void removePrivateMessages(String username) {
+        this.chatHistory.remove(username);
+    }
+
     //The messages are sent so fast, that in majority of cases we will not need the queue
     //The thread executing the task will be free by the time we call this method again
     public void enqueueMessage(String message) {

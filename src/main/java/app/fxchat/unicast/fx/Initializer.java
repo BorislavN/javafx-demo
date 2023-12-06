@@ -88,14 +88,14 @@ public class Initializer {
         return new SceneWrapper(fxmlLoader, scene);
     }
 
-    public static void newButtonAnimation(Button button) {
+    public static FadeTransition newButtonAnimation(Button button) {
         FadeTransition transition = new FadeTransition(Duration.seconds(2), button);
         transition.setFromValue(1);
         transition.setToValue(0.55);
         transition.setAutoReverse(true);
         transition.setCycleCount(Animation.INDEFINITE);
 
-        transition.play();
+        return transition;
     }
 
     private static Stage buildStage(String title, Modality modality) {

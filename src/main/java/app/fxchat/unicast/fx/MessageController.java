@@ -7,18 +7,17 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.util.List;
 
-//TODO: Fix CSS, add CSS stying when messages are pending on an contact
 //TODO: make use of the opacity animation
 public class MessageController {
     @FXML
@@ -116,7 +115,7 @@ public class MessageController {
                 }
             }
 
-            this.contacts.addEventHandler(MouseEvent.MOUSE_CLICKED, this.contactClickHandler());
+            this.contacts.addEventHandler(ActionEvent.ACTION, this.contactClickHandler());
 
             this.selectFirstContact();
             this.stage.show();
@@ -136,7 +135,7 @@ public class MessageController {
 
             boolean result = onlineUsers.removeIf(node -> user.equals(node.getId()));
 
-            if (result && this.currentDestination.equals(user)) {
+            if (result) {
                 this.selectFirstContact();
             }
 
@@ -199,14 +198,20 @@ public class MessageController {
         button.getStyleClass().add("atButton");
         button.setId(username);
 
+        button.setMaxWidth(Double.MAX_VALUE);
+        button.setPadding(new Insets(10, 0, 10, 0));
+
         return button;
     }
 
-    private EventHandler<MouseEvent> contactClickHandler() {
+    private EventHandler<ActionEvent> contactClickHandler() {
         return (event) -> {
             Node node = (Node) event.getTarget();
+            System.out.println(event.getSource());
 
-            if (node.getId() != null) {
+            System.out.println("id: " + node.getId());
+
+            if (node.getId() != null && !node.getId().equals(this.contacts.getId())) {
                 this.selectContact(node);
             }
         };
@@ -217,7 +222,9 @@ public class MessageController {
 
         if (contacts.isEmpty()) {
             this.setErrorMessage("Currently you are the only user!");
+            this.currentDestination = null;
             this.sendBtn.setDisable(true);
+            this.chatArea.clear();
 
             return;
         }
@@ -227,15 +234,21 @@ public class MessageController {
     }
 
     private void selectContact(Node button) {
-        this.currentDestination = button.getId();
+        this.contacts.getChildren().stream()
+                .filter(e -> e.getId().equals(this.currentDestination))
+                .forEach(e -> e.getStyleClass().remove("selectedButton"));
 
         button.getStyleClass().add("selectedButton");
+
+        this.currentDestination = button.getId();
+
         this.setDestinationLabel();
         this.loadFromHistory();
     }
 
     private void loadFromHistory() {
         List<String> history = this.context.getChatHistory().get(this.currentDestination);
+        this.chatArea.clear();
 
         if (history != null) {
             history.forEach(this::appendToChatArea);
