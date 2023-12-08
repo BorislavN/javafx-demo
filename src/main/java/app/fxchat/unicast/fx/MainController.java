@@ -17,9 +17,10 @@ import javafx.stage.WindowEvent;
 
 //TODO: introduce exceptuion handling in the "DM" stage, when the connection is lost
 //TODO: add the outgoing messages to the TextArea, only if they were sent successfully
+//TODO:  "stop animation if user goes offline (need to add some code in this controller)" / "keep the messages until they are seen"
 
-//TODO: create a unseenDMs flag in the ChatContext, so the animation will continue playing after
-// the user changes their username
+//TODO: cleanup code...
+//TODO: split project in two modules
 public class MainController {
     @FXML
     private Label announcementMessage;
@@ -30,7 +31,7 @@ public class MainController {
     @FXML
     private TextArea chatArea;
     private ChatContext context;
-    private FadeTransition unseenMessagesAnimation;
+    private FadeTransition buttonAnimation;
 
     public void setContext(ChatContext context) {
         this.context = context;
@@ -39,6 +40,7 @@ public class MainController {
 
         this.context.getChatHistory().get(Constants.DEFAULT_KEY).forEach(this::appendToTextArea);
         this.setWelcomeMessage();
+        this.playAnimation();
     }
 
     public void onSend(ActionEvent event) {
@@ -79,11 +81,7 @@ public class MainController {
     public void onShowMessages(ActionEvent event) {
         event.consume();
 
-        if (this.unseenMessagesAnimation != null) {
-            this.unseenMessagesAnimation.stop();
-            this.dmButton.setOpacity(0.4);
-        }
-
+        this.stopAnimation();
         this.dmButton.setDisable(true);
         this.backBtn.setDisable(true);
 
@@ -104,14 +102,9 @@ public class MainController {
 
                     if (newValue.startsWith(Constants.FROM_FLAG)) {
                         this.context.addToHistory(user, message);
+                        this.context.addToUnseenMessages(user);
 
-                        if (!this.dmButton.isDisabled()) {
-                            if (this.unseenMessagesAnimation == null) {
-                                this.unseenMessagesAnimation = Initializer.newButtonAnimation(this.dmButton);
-                            }
-
-                            this.unseenMessagesAnimation.playFromStart();
-                        }
+                        this.playAnimation();
 
                         return;
                     }
@@ -119,7 +112,6 @@ public class MainController {
                     if (newValue.startsWith(Constants.LEFT_FLAG)) {
                         this.context.removePrivateMessages(user);
                     }
-
 
                     this.context.addToHistory(Constants.DEFAULT_KEY, message);
                     this.appendToTextArea(message);
@@ -133,7 +125,9 @@ public class MainController {
             if (this.context.isClientLive()) {
                 this.dmButton.setDisable(false);
                 this.dmButton.setOpacity(1);
+                this.playAnimation();
             }
+
             this.backBtn.setDisable(false);
         };
     }
@@ -146,6 +140,23 @@ public class MainController {
     private void setErrorMessage(String errorMessage) {
         this.announcementMessage.setStyle("-fx-background-color: #eb4d42");
         this.announcementMessage.setText(errorMessage);
+    }
+
+    private void playAnimation() {
+        if (!this.dmButton.isDisabled() && this.context.hasUnseenMessages()) {
+            if (this.buttonAnimation == null) {
+                this.buttonAnimation = Initializer.newButtonAnimation(this.dmButton);
+            }
+
+            this.buttonAnimation.playFromStart();
+        }
+    }
+
+    private void stopAnimation() {
+        if (this.buttonAnimation != null) {
+            this.buttonAnimation.stop();
+            this.dmButton.setOpacity(0.4);
+        }
     }
 
     private EventHandler<WorkerStateEvent> failureHandler() {

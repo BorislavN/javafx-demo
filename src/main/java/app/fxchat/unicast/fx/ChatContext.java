@@ -17,6 +17,7 @@ public class ChatContext {
     private final ReceiverService receiverService;
     private final SenderService senderService;
     private String username;
+    private final Set<String> unseenMessages;
     private final Queue<String> typedMessages;
     private final Map<String, List<String>> chatHistory;
     private ChangeListener<String> messageListener;
@@ -29,6 +30,7 @@ public class ChatContext {
         this.username = null;
         this.typedMessages = new ArrayDeque<>();
         this.chatHistory = new HashMap<>();
+        this.unseenMessages = new HashSet<>();
 
         this.client = new ChatClient(address, port);
         this.senderService = new SenderService(this.client);
@@ -73,6 +75,27 @@ public class ChatContext {
         this.username = username;
     }
 
+    public boolean hasUnseenMessages() {
+        System.out.println("Size:" +this.unseenMessages);
+        return !this.unseenMessages.isEmpty();
+    }
+
+    public Set<String> getUnseenMessages() {
+        return Collections.unmodifiableSet(this.unseenMessages);
+    }
+
+    public void copyUnseenMessages(Set<String> unseenMessages) {
+        this.unseenMessages.retainAll(unseenMessages);
+    }
+
+    public void addToUnseenMessages(String username) {
+        this.unseenMessages.add(username);
+    }
+
+    public void markAsSeen(String username) {
+        this.unseenMessages.remove(username);
+    }
+
     public void setMessageListener(ChangeListener<String> listener) {
         if (this.messageListener != null) {
             this.receiverService.latestMessageProperty().removeListener(this.messageListener);
@@ -93,11 +116,7 @@ public class ChatContext {
 
     public void copyHistory(Map<String, List<String>> history) {
         for (String key : history.keySet()) {
-            this.chatHistory.merge(key, history.get(key), (o, n) -> {
-                o.addAll(n);
-
-                return o;
-            });
+            this.chatHistory.put(key, history.get(key));
         }
     }
 

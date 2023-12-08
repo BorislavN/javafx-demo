@@ -128,7 +128,7 @@ public class ChatServer implements Runnable {
 
         Set<String> usernames = this.getTakenUsernames();
 
-        if (usernames.contains(proposedName) && !currentName.equals(proposedName)) {
+        if (usernames.contains(proposedName) && !proposedName.equals(currentName)) {
             throw new IllegalArgumentException(ChatUtility.newUsernameExceptionResponse("Username is already taken!"));
         }
 

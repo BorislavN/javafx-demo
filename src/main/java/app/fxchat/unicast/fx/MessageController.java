@@ -2,6 +2,7 @@ package app.fxchat.unicast.fx;
 
 import app.fxchat.unicast.nio.ChatUtility;
 import app.fxchat.unicast.nio.Constants;
+import javafx.animation.FadeTransition;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -16,9 +17,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-//TODO: make use of the opacity animation
 public class MessageController {
     @FXML
     private VBox contacts;
@@ -33,6 +36,7 @@ public class MessageController {
     private ChatContext context;
     private Stage stage;
     private String currentDestination;
+    private Map<String, FadeTransition> animations;
 
     public void onEnter(ActionEvent event) {
         event.consume();
@@ -87,6 +91,7 @@ public class MessageController {
 
     public void setContext(Stage stage, ChatContext context) {
         this.context = context;
+        this.animations = new HashMap<>();
         this.stage = stage;
 
         ChangeListener<String> changeListener = this.getChangeHandler();
@@ -108,9 +113,16 @@ public class MessageController {
             String names = this.context.extractUserMessage(message);
             String[] users = this.context.extractMessageData(names, ";");
 
+            Set<String> unseenMessages = this.context.getUnseenMessages();
+
             for (String user : users) {
                 if (!user.equals(this.context.getUsername())) {
                     Button button = this.createNewContact(user);
+
+                    if (unseenMessages.contains(user)) {
+                        this.startAnimation(button);
+                    }
+
                     this.contacts.getChildren().add(button);
                 }
             }
@@ -136,7 +148,13 @@ public class MessageController {
             boolean result = onlineUsers.removeIf(node -> user.equals(node.getId()));
 
             if (result) {
-                this.selectFirstContact();
+                this.stopAnimation(user);
+                this.animations.remove(user);
+                this.context.markAsSeen(user);
+
+                if (user.equals(this.currentDestination)) {
+                    this.selectFirstContact();
+                }
             }
 
             return true;
@@ -172,14 +190,35 @@ public class MessageController {
 
             if (sender.equals(this.currentDestination)) {
                 this.appendToChatArea(text);
+                this.stopAnimation(sender);
+
+                this.context.markAsSeen(sender);
             }
 
-            //TODO: If not - add blinking animation to the destination button
+            Button button = (Button) this.contacts.getChildren()
+                    .filtered(e -> sender.equals(e.getId()))
+                    .get(0);
+
+            this.startAnimation(button);
 
             return true;
         }
 
         return false;
+    }
+
+    private void startAnimation(Button button) {
+        this.animations.putIfAbsent(button.getId(), Initializer.newButtonAnimation(button));
+        this.animations.get(button.getId()).playFromStart();
+    }
+
+    private void stopAnimation(String id) {
+        FadeTransition current = this.animations.get(id);
+
+        if (current != null) {
+            current.stop();
+            current.getNode().setOpacity(1);
+        }
     }
 
 
@@ -242,6 +281,9 @@ public class MessageController {
 
         this.currentDestination = button.getId();
 
+        this.context.markAsSeen(this.currentDestination);
+
+        this.stopAnimation(this.currentDestination);
         this.setDestinationLabel();
         this.loadFromHistory();
     }

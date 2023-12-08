@@ -99,6 +99,7 @@ public class SettingsController {
 
                 if (saveHistory) {
                     this.service.getValue().copyHistory(this.context.getChatHistory());
+                    this.service.getValue().copyUnseenMessages(this.context.getUnseenMessages());
                 }
 
                 this.context = this.service.getValue();
