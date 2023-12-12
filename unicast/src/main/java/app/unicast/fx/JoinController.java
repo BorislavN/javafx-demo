@@ -96,7 +96,7 @@ public class JoinController {
     }
 
     private void showMainView() {
-        Scene scene = Initializer.buildMainScene(this.context);
+        Scene scene = Initializer.buildMainScene(this.context,Initializer.getStage(this.joinBtn));
         Stage stage = Initializer.getStage(this.joinBtn);
         stage.setScene(scene);
     }

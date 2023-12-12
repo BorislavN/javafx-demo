@@ -23,7 +23,7 @@ public class SettingsInitializer {
             SettingsController controller = fxmlLoader.getController();
             controller.setInitialValues(popup, client);
 
-            URL cssUrl = SettingsController.class.getResource("style.css");
+            URL cssUrl = ChatApplication.class.getResource("style.css");
 
             if (cssUrl != null) {
                 scene.getStylesheets().add(cssUrl.toExternalForm());

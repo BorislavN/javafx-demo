@@ -21,6 +21,7 @@ public class ChatContext {
     private final Queue<String> typedMessages;
     private final Map<String, List<String>> chatHistory;
     private ChangeListener<String> messageListener;
+    private boolean connectionLost;
 
     public ChatContext() throws IOException {
         this(Constants.HOST, Constants.PORT);
@@ -31,6 +32,7 @@ public class ChatContext {
         this.typedMessages = new ArrayDeque<>();
         this.chatHistory = new HashMap<>();
         this.unseenMessages = new HashSet<>();
+        this.connectionLost=false;
 
         this.client = new ChatClient(address, port);
         this.senderService = new SenderService(this.client);
@@ -73,6 +75,14 @@ public class ChatContext {
         ChatUtility.validateField("Username", username);
 
         this.username = username;
+    }
+
+    public boolean isConnectionLost() {
+        return this.connectionLost;
+    }
+
+    public void setConnectionLost(boolean connectionLost) {
+        this.connectionLost = connectionLost;
     }
 
     public boolean hasUnseenMessages() {

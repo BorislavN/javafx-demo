@@ -12,15 +12,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
-//TODO: introduce exceptuion handling in the "DM" stage, when the connection is lost
-//TODO: add the outgoing messages to the TextArea, only if they were sent successfully
-//TODO:  "stop animation if user goes offline (need to add some code in this controller)" / "keep the messages until they are seen"
-
+//TODO: remove debug println statements
 //TODO: cleanup code...
-//TODO: split project in two modules
 public class MainController {
     @FXML
     private Label announcementMessage;
@@ -32,6 +27,7 @@ public class MainController {
     private TextArea chatArea;
     private ChatContext context;
     private FadeTransition buttonAnimation;
+    private MessageController messageController;
 
     public void setContext(ChatContext context) {
         this.context = context;
@@ -75,7 +71,7 @@ public class MainController {
     public void onChangeName(ActionEvent event) {
         event.consume();
 
-        Initializer.buildJoinScene(Initializer.getStage(this.backBtn), this.context);
+        Initializer.buildJoinScene(this.context, Initializer.getStage(this.backBtn));
     }
 
     public void onShowMessages(ActionEvent event) {
@@ -85,9 +81,9 @@ public class MainController {
         this.dmButton.setDisable(true);
         this.backBtn.setDisable(true);
 
-        Stage window = Initializer.buildDMStage(Initializer.getStage(this.dmButton), this.context);
-
-        window.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.enableButtons());
+        SceneWrapper wrapper = Initializer.buildDMStage(Initializer.getStage(this.dmButton), this.context);
+        this.messageController = wrapper.getLoader().getController();
+        wrapper.getStage().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.enableButtons());
     }
 
     public ChangeListener<String> getChangeHandler() {
@@ -111,6 +107,12 @@ public class MainController {
 
                     if (newValue.startsWith(Constants.LEFT_FLAG)) {
                         this.context.removePrivateMessages(user);
+                        this.context.markAsSeen(user);
+
+                        if (!this.context.hasUnseenMessages()) {
+                            this.stopAnimation();
+                            this.dmButton.setOpacity(1);
+                        }
                     }
 
                     this.context.addToHistory(Constants.DEFAULT_KEY, message);
@@ -162,7 +164,16 @@ public class MainController {
     private EventHandler<WorkerStateEvent> failureHandler() {
         return (event) -> {
             this.setErrorMessage("Connection lost!");
+            this.appendToTextArea("Connection to server was lost!");
+
             this.context.addToHistory(Constants.DEFAULT_KEY, "Connection to server was lost!");
+            this.context.setConnectionLost(true);
+
+            if (this.dmButton.isDisabled()) {
+                this.messageController.displayConnectionLoss();
+            }
+
+            this.stopAnimation();
 
             this.sendBtn.setDisable(true);
             this.dmButton.setDisable(true);

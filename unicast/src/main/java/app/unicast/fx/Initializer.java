@@ -14,8 +14,8 @@ import javafx.util.Duration;
 import java.io.IOException;
 
 public class Initializer {
-    public static void buildJoinScene(Stage stage, ChatContext context) {
-        SceneWrapper sceneWrapper = Initializer.buildScene("join-view.fxml");
+    public static void buildJoinScene( ChatContext context,Stage stage) {
+        SceneWrapper sceneWrapper = Initializer.buildScene("join-view.fxml",stage);
 
         stage.setScene(sceneWrapper.getScene());
 
@@ -27,8 +27,8 @@ public class Initializer {
         }
     }
 
-    public static Scene buildMainScene(ChatContext context) {
-        SceneWrapper sceneWrapper = Initializer.buildScene("chat-view.fxml");
+    public static Scene buildMainScene(ChatContext context,Stage stage) {
+        SceneWrapper sceneWrapper = Initializer.buildScene("chat-view.fxml",stage);
 
         MainController controller = sceneWrapper.getLoader().getController();
         controller.setContext(context);
@@ -38,7 +38,7 @@ public class Initializer {
 
     public static ChatContext buildSettingsStage(ChatContext context) {
         Stage stage = Initializer.buildStage("Settings", Modality.APPLICATION_MODAL);
-        SceneWrapper sceneWrapper = Initializer.buildScene("settings-view.fxml");
+        SceneWrapper sceneWrapper = Initializer.buildScene("settings-view.fxml",stage);
 
         SettingsController controller = sceneWrapper.getLoader().getController();
         controller.setContext(context);
@@ -52,20 +52,20 @@ public class Initializer {
         return controller.getContext();
     }
 
-    public static Stage buildDMStage(Stage parentStage, ChatContext context) {
+    public static SceneWrapper buildDMStage(Stage parentStage, ChatContext context) {
         Stage stage = Initializer.buildStage("Direct Messages", Modality.NONE);
-        SceneWrapper sceneWrapper = Initializer.buildScene("message-view.fxml");
+        SceneWrapper sceneWrapper = Initializer.buildScene("message-view.fxml",stage);
 
-        stage.initOwner(parentStage);
-        stage.setScene(sceneWrapper.getScene());
+        sceneWrapper.getStage().initOwner(parentStage);
+        sceneWrapper.getStage().setScene(sceneWrapper.getScene());
 
-        stage.setX(200);
-        stage.setY(200);
+        sceneWrapper.getStage().setX(200);
+        sceneWrapper.getStage().setY(200);
 
         MessageController controller = sceneWrapper.getLoader().getController();
         controller.setContext(stage, context);
 
-        return stage;
+        return sceneWrapper;
     }
 
     //Take care to provide a visible (not null) element
@@ -73,7 +73,7 @@ public class Initializer {
         return (Stage) visibleElement.getScene().getWindow();
     }
 
-    private static SceneWrapper buildScene(String fxmlName) {
+    private static SceneWrapper buildScene(String fxmlName,Stage stage) {
         FXMLLoader fxmlLoader = null;
         Scene scene = null;
 
@@ -85,7 +85,7 @@ public class Initializer {
             System.err.println("Scene failed to load - " + e.getMessage());
         }
 
-        return new SceneWrapper(fxmlLoader, scene);
+        return new SceneWrapper(fxmlLoader, scene,stage);
     }
 
     public static FadeTransition newButtonAnimation(Button button) {

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+//TODO: migrate to only using one animation and binding all contacts to it
 public class MessageController {
     @FXML
     private VBox contacts;
@@ -138,6 +139,11 @@ public class MessageController {
         return false;
     }
 
+    public void displayConnectionLoss(){
+        this.sendBtn.setDisable(true);
+        this.setErrorMessage("Connection lost!");
+    }
+
     private boolean handleLeftFlag(String message) {
         if (message.startsWith(Constants.LEFT_FLAG)) {
             String[] data = this.context.extractMessageData(message, "\\|");
@@ -150,7 +156,6 @@ public class MessageController {
             if (result) {
                 this.stopAnimation(user);
                 this.animations.remove(user);
-                this.context.markAsSeen(user);
 
                 if (user.equals(this.currentDestination)) {
                     this.selectFirstContact();
@@ -223,6 +228,12 @@ public class MessageController {
 
 
     private void setDestinationLabel() {
+        if (this.context.isConnectionLost()){
+            this.setErrorMessage("Connection lost!");
+
+            return;
+        }
+
         this.receiverLabel.setStyle("");
         this.receiverLabel.setText(String.format("To: %s", this.currentDestination));
     }

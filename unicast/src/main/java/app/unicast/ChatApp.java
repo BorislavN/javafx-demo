@@ -21,7 +21,7 @@ public class ChatApp extends Application {
         }
 
         stage.setTitle("Chat Client");
-        Initializer.buildJoinScene(stage, context);
+        Initializer.buildJoinScene( context,stage);
     }
 
     public static void main(String[] args) {
