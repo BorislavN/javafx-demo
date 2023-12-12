@@ -32,7 +32,7 @@ public class ChatContext {
         this.typedMessages = new ArrayDeque<>();
         this.chatHistory = new HashMap<>();
         this.unseenMessages = new HashSet<>();
-        this.connectionLost=false;
+        this.connectionLost = false;
 
         this.client = new ChatClient(address, port);
         this.senderService = new SenderService(this.client);
@@ -42,9 +42,7 @@ public class ChatContext {
             String newMessage = this.typedMessages.poll();
 
             if (newMessage != null) {
-                this.senderService.reset();
-                this.senderService.setCurrentMessage(newMessage);
-                this.senderService.restart();
+                this.setSenderServiceWork(newMessage);
             }
         }));
 
@@ -86,7 +84,6 @@ public class ChatContext {
     }
 
     public boolean hasUnseenMessages() {
-        System.out.println("Size:" +this.unseenMessages);
         return !this.unseenMessages.isEmpty();
     }
 
@@ -138,10 +135,7 @@ public class ChatContext {
     //The thread executing the task will be free by the time we call this method again
     public void enqueueMessage(String message) {
         if (!this.senderService.isRunning()) {
-            this.senderService.setCurrentMessage(message);
-            this.senderService.reset();
-            this.senderService.restart();
-
+            this.setSenderServiceWork(message);
             return;
         }
 
@@ -201,5 +195,13 @@ public class ChatContext {
 
     public static boolean isNotNull(ChatContext context) {
         return context != null && context.isInitialized();
+    }
+
+    private void setSenderServiceWork(String message) {
+        this.senderService.reset();
+        this.senderService.setCurrentMessage(message);
+        this.senderService.restart();
+
+        System.out.println("Sending: "+message);
     }
 }

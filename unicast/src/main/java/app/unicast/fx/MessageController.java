@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-//TODO: migrate to only using one animation and binding all contacts to it
 public class MessageController {
     @FXML
     private VBox contacts;
@@ -37,7 +36,8 @@ public class MessageController {
     private ChatContext context;
     private Stage stage;
     private String currentDestination;
-    private Map<String, FadeTransition> animations;
+    private FadeTransition animation;
+    private Map<String, Button> buttonMap;
 
     public void onEnter(ActionEvent event) {
         event.consume();
@@ -71,7 +71,7 @@ public class MessageController {
     public ChangeListener<String> getChangeHandler() {
         return (observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isBlank()) {
-                System.out.println(newValue);
+                System.out.println("Received: " + newValue);
 
                 if (this.handleMembersFlag(newValue)) {
                     return;
@@ -92,8 +92,9 @@ public class MessageController {
 
     public void setContext(Stage stage, ChatContext context) {
         this.context = context;
-        this.animations = new HashMap<>();
+        this.animation = Initializer.newButtonAnimation(new Button("Temp"));
         this.stage = stage;
+        this.buttonMap = new HashMap<>();
 
         ChangeListener<String> changeListener = this.getChangeHandler();
 
@@ -139,7 +140,7 @@ public class MessageController {
         return false;
     }
 
-    public void displayConnectionLoss(){
+    public void displayConnectionLoss() {
         this.sendBtn.setDisable(true);
         this.setErrorMessage("Connection lost!");
     }
@@ -147,15 +148,13 @@ public class MessageController {
     private boolean handleLeftFlag(String message) {
         if (message.startsWith(Constants.LEFT_FLAG)) {
             String[] data = this.context.extractMessageData(message, "\\|");
-            ObservableList<Node> onlineUsers = this.contacts.getChildren();
-
             String user = data[1];
 
-            boolean result = onlineUsers.removeIf(node -> user.equals(node.getId()));
+            Button removed = this.buttonMap.remove(user);
 
-            if (result) {
-                this.stopAnimation(user);
-                this.animations.remove(user);
+            if (removed != null) {
+                this.contacts.getChildren().remove(removed);
+                this.stopAnimation(removed);
 
                 if (user.equals(this.currentDestination)) {
                     this.selectFirstContact();
@@ -173,7 +172,6 @@ public class MessageController {
             String[] data = this.context.extractMessageData(message, "\\|");
 
             Button button = this.createNewContact(data[1]);
-
             this.contacts.getChildren().add(button);
 
             if (this.currentDestination == null) {
@@ -193,16 +191,18 @@ public class MessageController {
             String sender = data[1];
             String text = data[2];
 
+            Button button = this.buttonMap.get(sender);
+
+            if (sender == null) {
+                return true;
+            }
+
             if (sender.equals(this.currentDestination)) {
                 this.appendToChatArea(text);
-                this.stopAnimation(sender);
+                this.stopAnimation(button);
 
                 this.context.markAsSeen(sender);
             }
-
-            Button button = (Button) this.contacts.getChildren()
-                    .filtered(e -> sender.equals(e.getId()))
-                    .get(0);
 
             this.startAnimation(button);
 
@@ -212,23 +212,21 @@ public class MessageController {
         return false;
     }
 
-    private void startAnimation(Button button) {
-        this.animations.putIfAbsent(button.getId(), Initializer.newButtonAnimation(button));
-        this.animations.get(button.getId()).playFromStart();
+    private void startAnimation(Node node) {
+        if (node.getId() != null && !node.getId().equals(this.currentDestination)) {
+            node.opacityProperty().bind(this.animation.getNode().opacityProperty());
+            this.animation.play();
+        }
     }
 
-    private void stopAnimation(String id) {
-        FadeTransition current = this.animations.get(id);
-
-        if (current != null) {
-            current.stop();
-            current.getNode().setOpacity(1);
-        }
+    private void stopAnimation(Node node) {
+        node.opacityProperty().unbind();
+        node.setOpacity(1);
     }
 
 
     private void setDestinationLabel() {
-        if (this.context.isConnectionLost()){
+        if (this.context.isConnectionLost()) {
             this.setErrorMessage("Connection lost!");
 
             return;
@@ -251,15 +249,14 @@ public class MessageController {
         button.setMaxWidth(Double.MAX_VALUE);
         button.setPadding(new Insets(10, 0, 10, 0));
 
+        this.buttonMap.putIfAbsent(button.getId(), button);
+
         return button;
     }
 
     private EventHandler<ActionEvent> contactClickHandler() {
         return (event) -> {
             Node node = (Node) event.getTarget();
-            System.out.println(event.getSource());
-
-            System.out.println("id: " + node.getId());
 
             if (node.getId() != null && !node.getId().equals(this.contacts.getId())) {
                 this.selectContact(node);
@@ -294,7 +291,7 @@ public class MessageController {
 
         this.context.markAsSeen(this.currentDestination);
 
-        this.stopAnimation(this.currentDestination);
+        this.stopAnimation(button);
         this.setDestinationLabel();
         this.loadFromHistory();
     }

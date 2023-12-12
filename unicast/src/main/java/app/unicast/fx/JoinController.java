@@ -104,7 +104,7 @@ public class JoinController {
     public ChangeListener<String> getChangeHandler() {
         return (observable, oldValue, newValue) -> {
             if (newValue != null) {
-                System.out.println(newValue);
+                System.out.println("Received: "+newValue);
 
                 String value = this.context.extractUserMessage(newValue);
                 String joinPartial = String.format("%s|%s", Constants.JOINED_FLAG, this.chosenUsername);

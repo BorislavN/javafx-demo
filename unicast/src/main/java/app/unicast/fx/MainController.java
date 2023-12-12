@@ -14,7 +14,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.WindowEvent;
 
-//TODO: remove debug println statements
+//TODO: extract repeating strings messages to constants
 //TODO: cleanup code...
 public class MainController {
     @FXML
@@ -77,12 +77,13 @@ public class MainController {
     public void onShowMessages(ActionEvent event) {
         event.consume();
 
-        this.stopAnimation();
         this.dmButton.setDisable(true);
         this.backBtn.setDisable(true);
+        this.stopAnimation();
 
         SceneWrapper wrapper = Initializer.buildDMStage(Initializer.getStage(this.dmButton), this.context);
         this.messageController = wrapper.getLoader().getController();
+
         wrapper.getStage().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this.enableButtons());
     }
 
@@ -111,7 +112,6 @@ public class MainController {
 
                         if (!this.context.hasUnseenMessages()) {
                             this.stopAnimation();
-                            this.dmButton.setOpacity(1);
                         }
                     }
 
@@ -126,7 +126,6 @@ public class MainController {
         return (e) -> {
             if (this.context.isClientLive()) {
                 this.dmButton.setDisable(false);
-                this.dmButton.setOpacity(1);
                 this.playAnimation();
             }
 
@@ -145,19 +144,28 @@ public class MainController {
     }
 
     private void playAnimation() {
-        if (!this.dmButton.isDisabled() && this.context.hasUnseenMessages()) {
-            if (this.buttonAnimation == null) {
-                this.buttonAnimation = Initializer.newButtonAnimation(this.dmButton);
-            }
+        if (this.buttonAnimation == null) {
+            this.buttonAnimation = Initializer.newButtonAnimation(this.dmButton);
+        }
 
-            this.buttonAnimation.playFromStart();
+        if (!this.dmButton.isDisabled()  ) {
+            this.dmButton.setOpacity(1);
+
+            if (this.context.hasUnseenMessages()){
+                this.buttonAnimation.playFromStart();
+            }
         }
     }
 
     private void stopAnimation() {
         if (this.buttonAnimation != null) {
             this.buttonAnimation.stop();
-            this.dmButton.setOpacity(0.4);
+
+            if (this.dmButton.isDisabled()) {
+                this.dmButton.setOpacity(0.4);
+            } else {
+                this.dmButton.setOpacity(1);
+            }
         }
     }
 
@@ -173,10 +181,9 @@ public class MainController {
                 this.messageController.displayConnectionLoss();
             }
 
-            this.stopAnimation();
-
             this.sendBtn.setDisable(true);
             this.dmButton.setDisable(true);
+            this.stopAnimation();
 
             this.context.shutdown();
         };
