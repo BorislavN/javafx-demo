@@ -26,7 +26,7 @@ public class JoinController {
 
     public void setContext(ChatContext context) {
         if (!ChatContext.isNotNull(context)) {
-            this.setErrorMessage("Context failed initialization!", true);
+            this.setErrorMessage(Constants.CONTEXT_ERROR, true);
             return;
         }
 
@@ -39,7 +39,7 @@ public class JoinController {
         }
 
         if (!this.context.isClientLive()) {
-            this.setErrorMessage("Connection lost!", true);
+            this.setErrorMessage(Constants.CONNECTION_ERROR, true);
             return;
         }
 
@@ -96,7 +96,7 @@ public class JoinController {
     }
 
     private void showMainView() {
-        Scene scene = Initializer.buildMainScene(this.context,Initializer.getStage(this.joinBtn));
+        Scene scene = Initializer.buildMainScene(this.context, Initializer.getStage(this.joinBtn));
         Stage stage = Initializer.getStage(this.joinBtn);
         stage.setScene(scene);
     }
@@ -104,7 +104,7 @@ public class JoinController {
     public ChangeListener<String> getChangeHandler() {
         return (observable, oldValue, newValue) -> {
             if (newValue != null) {
-                System.out.println("Received: "+newValue);
+                System.out.println("Received: " + newValue);
 
                 String value = this.context.extractUserMessage(newValue);
                 String joinPartial = String.format("%s|%s", Constants.JOINED_FLAG, this.chosenUsername);
@@ -133,9 +133,9 @@ public class JoinController {
 
     private EventHandler<WorkerStateEvent> failureHandler() {
         return (event) -> {
-            this.setErrorMessage("Connection lost!", true);
+            this.setErrorMessage(Constants.CONNECTION_ERROR, true);
 
-            this.context.addToHistory(Constants.DEFAULT_KEY,"Connection to server was lost!");
+            this.context.addToHistory(Constants.DEFAULT_KEY, Constants.CONNECTION_ERROR);
             this.context.shutdown();
         };
     }

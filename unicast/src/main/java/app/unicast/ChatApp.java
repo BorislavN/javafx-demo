@@ -17,11 +17,11 @@ public class ChatApp extends Application {
         try {
             context = new ChatContext(Constants.HOST, Constants.PORT);
         } catch (IOException e) {
-            ChatUtility.printAsException("Context failed initialization!");
+            ChatUtility.printAsException(Constants.CONTEXT_ERROR);
         }
 
         stage.setTitle("Chat Client");
-        Initializer.buildJoinScene( context,stage);
+        Initializer.buildJoinScene(context, stage);
     }
 
     public static void main(String[] args) {

@@ -22,5 +22,8 @@ public class Constants {
     public static final String USERNAME_EXCEPTION_FLAG = "#usernameException";
 
     public static final String DEFAULT_KEY = "default";
+
+    public static final String CONTEXT_ERROR = "Context failed initialization!";
+    public static final String CONNECTION_ERROR = "Connection lost!";
 }
 

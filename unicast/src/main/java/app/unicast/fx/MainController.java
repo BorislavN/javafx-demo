@@ -14,8 +14,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.WindowEvent;
 
-//TODO: extract repeating strings messages to constants
-//TODO: cleanup code...
 public class MainController {
     @FXML
     private Label announcementMessage;
@@ -148,10 +146,10 @@ public class MainController {
             this.buttonAnimation = Initializer.newButtonAnimation(this.dmButton);
         }
 
-        if (!this.dmButton.isDisabled()  ) {
+        if (!this.dmButton.isDisabled()) {
             this.dmButton.setOpacity(1);
 
-            if (this.context.hasUnseenMessages()){
+            if (this.context.hasUnseenMessages()) {
                 this.buttonAnimation.playFromStart();
             }
         }
@@ -171,10 +169,9 @@ public class MainController {
 
     private EventHandler<WorkerStateEvent> failureHandler() {
         return (event) -> {
-            this.setErrorMessage("Connection lost!");
-            this.appendToTextArea("Connection to server was lost!");
+            this.setErrorMessage(Constants.CONNECTION_ERROR);
 
-            this.context.addToHistory(Constants.DEFAULT_KEY, "Connection to server was lost!");
+            this.context.addToHistory(Constants.DEFAULT_KEY, Constants.CONNECTION_ERROR);
             this.context.setConnectionLost(true);
 
             if (this.dmButton.isDisabled()) {

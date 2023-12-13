@@ -71,7 +71,7 @@ public class SettingsController {
             this.portInput.setText(String.valueOf(this.context.getClient().getPort()));
 
             if (!this.context.isClientLive()) {
-                this.setErrorMessage("Connection was lost!");
+                this.setErrorMessage(Constants.CONNECTION_ERROR);
             }
 
             return;
@@ -112,7 +112,7 @@ public class SettingsController {
                 e.consume();
 
                 String cause = e.getSource().getException().getClass().getSimpleName();
-                String message = "Client failed initialization!";
+                String message = Constants.CONTEXT_ERROR;
 
 
                 if ("UnresolvedAddressException".equals(cause)) {

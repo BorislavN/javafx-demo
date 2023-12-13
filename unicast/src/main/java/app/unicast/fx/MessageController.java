@@ -68,6 +68,26 @@ public class MessageController {
         }
     }
 
+    public void setContext(Stage stage, ChatContext context) {
+        this.context = context;
+        this.animation = Initializer.newButtonAnimation(new Button("Temp"));
+        this.stage = stage;
+        this.buttonMap = new HashMap<>();
+
+        ChangeListener<String> changeListener = this.getChangeHandler();
+
+        //Add listener
+        this.context.getReceiverService().latestMessageProperty().addListener(changeListener);
+
+        //Remove listener before close
+        this.stage.setOnCloseRequest((e) -> {
+            this.context.getReceiverService().latestMessageProperty().removeListener(changeListener);
+        });
+
+        //Request online users
+        this.context.enqueueMessage(ChatUtility.newMembersRequest());
+    }
+
     public ChangeListener<String> getChangeHandler() {
         return (observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isBlank()) {
@@ -90,24 +110,9 @@ public class MessageController {
         };
     }
 
-    public void setContext(Stage stage, ChatContext context) {
-        this.context = context;
-        this.animation = Initializer.newButtonAnimation(new Button("Temp"));
-        this.stage = stage;
-        this.buttonMap = new HashMap<>();
-
-        ChangeListener<String> changeListener = this.getChangeHandler();
-
-        //Add listener
-        this.context.getReceiverService().latestMessageProperty().addListener(changeListener);
-
-        //Remove listener before close
-        this.stage.setOnCloseRequest((e) -> {
-            this.context.getReceiverService().latestMessageProperty().removeListener(changeListener);
-        });
-
-        //Request online users
-        this.context.enqueueMessage(ChatUtility.newMembersRequest());
+    public void displayConnectionLoss() {
+        this.sendBtn.setDisable(true);
+        this.setErrorMessage(Constants.CONNECTION_ERROR);
     }
 
     private boolean handleMembersFlag(String message) {
@@ -138,11 +143,6 @@ public class MessageController {
         }
 
         return false;
-    }
-
-    public void displayConnectionLoss() {
-        this.sendBtn.setDisable(true);
-        this.setErrorMessage("Connection lost!");
     }
 
     private boolean handleLeftFlag(String message) {
@@ -224,10 +224,9 @@ public class MessageController {
         node.setOpacity(1);
     }
 
-
     private void setDestinationLabel() {
         if (this.context.isConnectionLost()) {
-            this.setErrorMessage("Connection lost!");
+            this.setErrorMessage(Constants.CONNECTION_ERROR);
 
             return;
         }
