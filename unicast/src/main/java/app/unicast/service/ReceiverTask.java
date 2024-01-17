@@ -1,7 +1,6 @@
 package app.unicast.service;
 
 import app.unicast.nio.ChatClient;
-import app.unicast.nio.Constants;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
@@ -39,7 +38,7 @@ public class ReceiverTask extends Task<Void> {
 
                         if (message != null) {
                             Platform.runLater(() -> {
-                                if (message.startsWith(Constants.MEMBERS_COMMAND)) {
+                                if (message.equals(this.latestMessage.getValue())) {
                                     this.latestMessage.setValue(null);
                                 }
 
