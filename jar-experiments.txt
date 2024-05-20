@@ -1,4 +1,4 @@
-The problem I was facing - after crating a jar with IntelliJs "Add Artifact" - I was getting an exception while trying to run it
+The problem I was facing - after creating a jar with IntelliJs "Add Artifact" - I was getting an exception while trying to run it
 The javafx components where missing...
 
 Solution 1:
@@ -10,7 +10,7 @@ This way we can add the javafx "javafx.controls,javafx.fxml" to the module path 
 Example: java --module-path "folder_with_jars" --add-modules javafx.controls,javafx.fxml -jar "TheMainApplication.jar"
 
 Solution 2:
-Crate a Launcher class, which has a main method calling the ChatApplication main method
+Create a Launcher class, which has a main method calling the ChatApplication main method
 Change the entry point of the program to the Launcher class in the pom
 Select the Launcher class as the entry point of the application
 Create a jar using IntelliJs "Add Artifact" Menu, don't use "Add library jars to output directory and link in manifest" option
@@ -22,6 +22,6 @@ After executing the command in the target folder you will find a launcher to exe
 The launcher name is set in the pom "<jlinkImageName>app</jlinkImageName>"
 
 Solution 4:
-After crating a jar as in "Solution 1", you can use "jpackage" to crate an exe
+After creating a jar as in "Solution 1", you can use "jpackage" to create an exe
 Example: jpackage --type "app-image" --module-path "folder_with_jars" --module your.module/package.names.MainClass --dest ./chat
 In the "chat" folder you will find an exe
