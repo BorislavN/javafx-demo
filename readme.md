@@ -1,4 +1,4 @@
-# 1.About
+## 1.About.
 Hello.
 Here I will create JavaFx GUI for my chat implementations.
 
