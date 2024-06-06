@@ -265,9 +265,4 @@ public class ChatServer implements Runnable {
     private void logError(String message, Throwable error) {
         System.err.printf("[%1$tH:%1$tM] Server log - \"%2$s - %3$s\"%n", LocalTime.now(), message, error.getMessage());
     }
-
-    public static void main(String[] args) throws IOException {
-        ChatServer server = new ChatServer();
-        server.run();
-    }
 }
